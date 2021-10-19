@@ -5,17 +5,18 @@ library(SAMtool)
 source("00_performance_measures.R")
 
 nsim <- 48
-OM <- RPC::DFO_WCVI_Herring_2019 %>% SubCpars(1:3)
+OM <- RPC::DFO_WCVI_Herring_2019 %>% SubCpars(1:nsim)
+OM@cpars$Data@vbt0 <- NA
 OM@interval <- 200
-Hist <- runMSE(OM, Hist = TRUE)
+Hist <- runMSE(OM, Hist = TRUE, parallel = TRUE)
 
 
 ##### First step - fixed F MPs to identify suitability of serious harm metrics to fishing
 MPs <- paste0(relF, "_FMSY")
 MSE <- Project(Hist, MPs = MPs, extended = TRUE)
-saveRDS(MSE, file = "Pherring/Pherring.rds")
+saveRDS(MSE, file = "Pherring/Pherring_FMSY.rds")
 
-MSE <- readRDS("Pherring/Pherring.rds")
+MSE <- readRDS("Pherring/Pherring_FMSY.rds")
 
 # Show historical probability of serious harm
 type <- c("HistSSB", "iSCAM_SSB0", "SSBMSY", "depletion", "50%Rmax", "90%RS")
@@ -62,7 +63,7 @@ HCR_pherring <- function(Assessment, reps = 1, HCR_type = c("escapement", "hocke
   
   if(Assessment@conv) {
     SSB <- Assessment@SSB
-    Year <- names(SSB) %>% as.numeric()
+    Year <- as.numeric(names(SSB))
     
     if(OCP_type == "SSB") {
       OCP_val <- SSB[length(SSB)]
@@ -103,16 +104,16 @@ HCR_pherring <- function(Assessment, reps = 1, HCR_type = c("escapement", "hocke
     TAC <- NA_real_
   }
   Rec <- new("Rec")
-  Rec@TAC <- MSEtool::TACfilter(TAC) %>% rep(reps)
+  Rec@TAC <- rep(MSEtool::TACfilter(TAC), reps)
   return(Rec)
 }
 class(HCR_pherring) <- "HCR"
 
-pherring_assess <- function(x, Data) {
+pherring_assess <- function(x, Data, ...) {
   if(max(Data@Year) > Data@LHYear) {
     Data@AddInd[, 1, match(Data@LHYear, Data@Year):length(Data@Year)] <- NA_real_
   }
-  SCA_RWM(x, Data, prior = list(M = c(Data@Mort[x], 0.2)), AddInd = 1:2, M_bounds = c(0.1, 2))
+  SAMtool::SCA_RWM(x, Data, prior = list(M = c(Data@Misc$StockPars$M_ageArray[x, 1, 1], 0.2)), AddInd = 1:2, M_bounds = c(0.1, 2))
 }
 class(pherring_assess) <- "Assess"
 
@@ -120,30 +121,31 @@ MP1 <- make_MP(pherring_assess, HCR_pherring, HCR_type = "escapement", OCP_type 
 MP8 <- make_MP(pherring_assess, HCR_pherring, HCR_type = "hockeystick", OCP_type = "depletion",
                SSB_cutoff = 0.3, SSB_upper = 0.6, max_harvest = 0.1, max_cap = NULL)
 
+setup(12)
+sfExport(list = c("pherring_assess", "HCR_pherring", "MP1", "MP8"))
 Hist@OM@interval <- 2
-MSE2 <- Project(Hist, MPs = c("MP1", "MP2"), extended = TRUE, checkMPs = FALSE)
-saveRDS(MSE2, file = "Pherring/Pherring.rds")
+MSE2 <- Project(Hist, MPs = c("MP1", "MP8"), extended = TRUE, parallel = TRUE, checkMPs = FALSE)
+saveRDS(MSE2, file = "Pherring/Pherring_HCR.rds")
 
-MSE2 <- readRDS("Pcod/Pcod2.rds")
+MSE2 <- readRDS("Pherring/Pherring_HCR.rds")
 diagnostic(MSE2)
 
-# Probability of being above 5 definitions of serious harm 
-type <- c("HistSSB", "SSBMSY", "depletion", "50%Rmax", "90%RS")
-frac <- c(1, 0.4, 0.3, 1, 1)
-HistSSB_y <- 2000
+# Probability of being above 5 definitions of serious harm
+type <- c("HistSSB", "iSCAM_SSB0", "SSBMSY", "depletion", "50%Rmax", "90%RS")
+frac <- c(1, 0.3, 0.4, 0.4, 1, 1)
 
-PM <- Map(function(x, y, z) SHPM(MSE2, type = x, frac = y, HistSSB_y = z), x = type, y = frac, z = HistSSB_y)
+PM <- Map(function(x, y) SHPM(MSE2, type = x, frac = y, HistSSB_y = 2010, dep_type = "Dynamic"), x = type, y = frac)
 
 annual_PM <- lapply(PM, function(x) apply(x@Stat >= x@Ref, 2:3, mean) %>% 
-                      structure(dimnames = list(MP = MSE2@MPs, Year = 2020 + 1:MSE2@proyears)) %>% reshape2::melt() %>% 
+                      structure(dimnames = list(MP = MSE2@MPs, Year = MSE2@OM$CurrentYr[1] + 1:MSE2@proyears)) %>% reshape2::melt() %>% 
                       dplyr::mutate(Metric = x@Caption)) %>%
   dplyr::bind_rows()
 
 ggplot(annual_PM, aes(Year, value, colour = Metric)) + geom_point() + geom_line() + theme_bw() + 
   facet_wrap(~ MP) + 
   scale_colour_discrete(labels = scales::label_parse()) +
-  labs(y = "Probability above serious harm", colour = "Serious harm candidates")
-ggsave("Pcod/Pcod_SH_MP.png", height = 7, width = 10)
+  labs(y = "Probability above serious harm", colour = "Serious harm candidates") + coord_cartesian(ylim = c(0, 1))
+ggsave("Pherring/Pherring_SH_MP.png", height = 4, width = 10)
 
 #terminal_PM <- dplyr::filter(annual_PM, Year == max(Year))
 

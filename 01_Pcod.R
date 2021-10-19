@@ -7,8 +7,7 @@ source("00_performance_measures.R")
 nsim <- 48
 OM <- RPC::DFO_Pacific_Cod_2020 %>% SubCpars(1:nsim)
 OM@interval <- 200
-Hist <- runMSE(OM, Hist = TRUE)
-
+Hist <- runMSE(OM, Hist = TRUE, parallel = TRUE)
 
 
 ##### First step - fixed F MPs to identify suitability of serious harm metrics to fishing
@@ -63,7 +62,7 @@ ggsave("Pcod/Pcod_SH_FMSY2.png", height = 4, width = 8)
 HCR_pcod <- function(Assessment, reps = 1, y_cutoff = 2000, y_USR = 1956:2004, y_RR = 1956:2004) {
   if(Assessment@conv) {
     SSB <- Assessment@SSB
-    Year <- names(SSB) %>% as.numeric()
+    Year <- as.numeric(names(SSB))
     
     OCP_val <- SSB[length(SSB)]
     OCP <- c(mean(SSB[match(y_cutoff, Year)]), mean(SSB[match(y_USR, Year)]))
@@ -76,16 +75,37 @@ HCR_pcod <- function(Assessment, reps = 1, y_cutoff = 2000, y_USR = 1956:2004, y
     TAC <- NA_real_
   }
   Rec <- new("Rec")
-  Rec@TAC <- MSEtool::TACfilter(TAC) %>% rep(reps)
+  Rec@TAC <- rep(MSEtool::TACfilter(TAC), reps)
   return(Rec)
 }
 class(HCR_pcod) <- "HCR"
 
-pcod_assess <- function(x, Data) {
+pcod_assess <- function(x, Data, MW = TRUE, start = list(R0 = 1.6e4, sigma_W = 0.15)) {
   if(max(Data@Year) > Data@LHYear) {
-    Data@AddInd[, 1:4, match(Data@LHYear, Data@Year):length(Data@Year)] <- NA_real_
+    Data@AddInd[, 1:4, match(Data@LHYear + 1, Data@Year):length(Data@Year)] <- NA_real_
+    
+    if(MW) {
+      MW_sim <- apply(Data@CAL[x, , ][match(Data@LHYear + 1, Data@Year):length(Data@Year), , drop = FALSE], 1, function(xx) {
+        weighted.mean(Data@wla[x]*Data@CAL_mids^Data@wlb[x], xx, na.rm = TRUE)
+      })
+      age <- 0:Data@MaxAge
+      a <- Data@wla[x]
+      b <- Data@wlb[x]
+      Linf <- Data@vbLinf[x]
+      K <- Data@vbK[x]
+      t0 <- Data@vbt0[x]
+      La <- Linf * (1 - exp(-K * (age - t0)))
+      Wa <- a * La ^ b
+      MW_sim <- apply(Data@CAA[x, , ][match(Data@LHYear + 1, Data@Year):length(Data@Year), , drop = FALSE], 1, function(xx) {
+        weighted.mean(Wa, xx, na.rm = TRUE)
+      })
+      
+      Data@Misc[[x]]$MW <- c(pcod$data@MS[, 1], MW_sim)
+    }
+  } else if(MW) {
+    Data@Misc[[x]]$MW <- pcod$data@MS[, 1]
   }
-  DD_SS(x, Data, MW = TRUE, start = list(tau = 0.8, R0 = 16000), AddInd = 1:5)
+  DD_SS(x, Data, MW = MW, start = start, prior = pcod$prior, AddInd = 1:5)
 }
 class(pcod_assess) <- "Assess"
 
@@ -94,13 +114,14 @@ class(pcod_assess) <- "Assess"
 #prelim_AM(Hist@Data, SCA)
 
 pcod_MP_perfect <- make_MP(Perfect, HCR_pcod)
-pcod_MP_DD <- make_MP(pcod_assess, HCR_pcod)
-pcod_MP_shortcut <- make_MP(Shortcut2, HCR_pcod)
+pcod_MP_DD <- make_MP(pcod_assess, HCR_pcod, MW = FALSE)
+#pcod_MP_shortcut <- make_MP(Shortcut2, HCR_pcod)
 
 Hist@OM@interval <- 2
 #debug(HCR_pcod)
-MSE2 <- Project(Hist, MPs = c("pcod_MP_DD", "pcod_MP_perfect"), extended = TRUE, checkMPs = FALSE)
-saveRDS(MSE2, file = "Pcod/Pcod_HCR.rds")
+sfExport(list = c("pcod_assess", "HCR_pcod"))
+MSE2 <- Project(Hist, MPs = c("pcod_MP_DD", "pcod_MP_perfect"), parallel = FALSE, extended = TRUE, checkMPs = FALSE)
+saveRDS(MSE2, file = "Pcod/Pcod_HCR2.rds")
 
 MSE2 <- readRDS("Pcod/Pcod_HCR.rds")
 diagnostic(MSE2)
@@ -109,6 +130,7 @@ diagnostic(MSE2)
 type <- c("HistSSB", "SSBMSY", "depletion", "50%Rmax", "90%RS")
 frac <- c(1, 0.4, 0.3, 1, 1)
 HistSSB_y <- 2000
+
 
 PM <- Map(function(x, y) SHPM(MSE2, type = x, frac = y, HistSSB_y = HistSSB_y), x = type, y = frac)
 
