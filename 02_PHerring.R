@@ -18,41 +18,13 @@ saveRDS(MSE, file = "Pherring/Pherring_FMSY.rds")
 
 MSE <- readRDS("Pherring/Pherring_FMSY.rds")
 
-# Show historical probability of serious harm
-type <- c("HistSSB", "iSCAM_SSB0", "SSBMSY", "depletion", "50%Rmax", "90%RS")
-frac <- c(1, 0.3, 0.4, 0.4, 1, 1)
+##### First step - fixed F MPs to identify suitability of serious harm metrics to fishing
+MPs <- paste0(relF, "_M")
+MSE <- Project(Hist, MPs = MPs, extended = TRUE)
+saveRDS(MSE, file = "Pherring/Pherring_M.rds")
 
-PM_hist <- Map(function(x, y) SHPM(MSE, type = x, frac = y, HistSSB_y = 2010, dep_type = "Dynamic", Hist = TRUE), x = type, y = frac)
+MSE <- readRDS("Pherring/Pherring_M.rds")
 
-annual_PM_hist <- lapply(PM_hist, function(x) data.frame(Year = seq(MSE@OM$CurrentYr[1] - MSE@nyears + 1, MSE@OM$CurrentYr[1]),
-                                                         value = x@Prob, Metric = x@Caption)) %>%
-  dplyr::bind_rows()
-
-ggplot(annual_PM_hist, aes(Year, value, colour = Metric)) + geom_point() + geom_line() + theme_bw() + 
-  scale_colour_discrete(labels = scales::label_parse()) +
-  labs(y = "Probability above serious harm", colour = "Serious harm candidates")
-ggsave("Pherring/Pherring_SH_Hist.png", height = 3, width = 8)
-
-# Probability of being above 5 definitions of serious harm from projections
-PM <- Map(function(x, y) SHPM(MSE, type = x, frac = y, HistSSB_y = 2010, dep_type = "Dynamic"), x = type, y = frac)
-
-annual_PM <- lapply(PM, function(x) apply(x@Stat >= x@Ref, 2:3, mean) %>% 
-                      structure(dimnames = list(FM = relF, Year = MSE@OM$CurrentYr[1] + 1:MSE@proyears)) %>% reshape2::melt() %>% 
-                      dplyr::mutate(Metric = x@Caption, FMlabel = paste0("F/F[MSY]==", FM))) %>%
-  dplyr::bind_rows()
-
-ggplot(annual_PM, aes(Year, value, colour = Metric)) + geom_point() + geom_line() + theme_bw() + 
-  facet_wrap(~ FMlabel, labeller = label_parsed) + 
-  scale_colour_discrete(labels = scales::label_parse()) +
-  labs(y = "Probability above serious harm", colour = "Serious harm candidates")
-ggsave("Pherring/Pherring_SH_FMSY.png", height = 7, width = 10)
-
-terminal_PM <- dplyr::filter(annual_PM, Year == max(Year))
-
-ggplot(terminal_PM, aes(FM, value, colour = Metric)) + geom_point() + geom_line() + theme_bw() + 
-  scale_colour_discrete(labels = scales::label_parse()) +
-  labs(x = expression(F/F[MSY]), y = "Probability above serious harm in 2069", colour = "Serious harm candidates")
-ggsave("Pherring/Pherring_SH_FMSY2.png", height = 4, width = 8)
 
 ##### Second step - test two different HCRs
 # See Table 1 of https://waves-vagues.dfo-mpo.gc.ca/Library/40760133.pdf

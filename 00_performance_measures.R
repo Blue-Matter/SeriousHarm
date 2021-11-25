@@ -167,10 +167,17 @@ SHPM <- function(MSE, type = c("HistSSB", "SSBMSY", "depletion", "50%Rmax", "90%
 #SHPM(res, "SSBMSY")
 #SHPM(res, "depletion", frac = 0.4)
 
-FMSY_MP <- function(x, Data, reps = 1, frac = 1) {
+relF_MP <- function(x, Data, reps = 1, frac = 1, type = c("FMSY", "M", "abs")) {
+  type <- match.arg(type)
+  
   y <- max(Data@Year) - Data@LHYear+1
   nyears <- length(Data@Misc$FleetPars$Find[x,])
-  FMSY <- Data@Misc$ReferencePoints$ByYear$FMSY[x,nyears+y]
+  
+  relF <- switch(type,
+                 "FMSY" = Data@Misc$ReferencePoints$ByYear$FMSY[x,nyears+y],
+                 "M" = Data@Misc$StockPars$Marray[x,nyears+y],
+                 "abs" = 1)
+  
   q <- Data@Misc$FleetPars$qs[x]
   qvar <- Data@Misc$FleetPars$qvar[x,y] # future only
   if (length(qvar)<1) qvar <- 1
@@ -178,47 +185,58 @@ FMSY_MP <- function(x, Data, reps = 1, frac = 1) {
   qcur <- qvar * q*(1+qinc/100)^y # catchability this year
   
   HistE <- Data@OM$FinF[x] # Last historical fishing effort
-  MSYE <- FMSY/qcur # effort for this year's FMSY
+  Etarget <- relF/qcur # effort for this year's FMSY
   
   Rec <- new('Rec')
-  Rec@Effort <- MSYE/HistE * frac
+  Rec@Effort <- Etarget/HistE * frac
   Rec
 }
 
-relF <- seq(0, 1.3, 0.1)
 
-lapply(relF, function(x) {
-  MP <- FMSY_MP
-  formals(MP)$frac <- x
-  MP_name <- paste0(x, "_FMSY")
+make_F_MP <- function(relF, type = c("FMSY", "M", "abs")) {
+  type <- match.arg(type)
   
-  assign(MP_name, structure(MP, class = "MP"), envir = .GlobalEnv)
-})
+  lapply(relF, function(x) {
+    MP <- relF_MP
+    formals(MP)$frac <- x
+    formals(MP)$type <- type
+    MP_name <- paste0(x, "_", ifelse(type == "abs", "F", type))
+    assign(MP_name, structure(MP, class = "MP"), envir = .GlobalEnv)
+  })
+  invisible()
+}
+
+#relF <- seq(0, 1.3, 0.1)
+#make_F_MP(relF)
+
+relF <- seq(0, 4, 0.25)
+make_F_MP(relF, "M")
+
+.iSCAM_SSB0 <- function(Hist) {
+  nyears <- Hist@OM@nyears
+  maxage <- Hist@OM@maxage
+  
+  M <- apply(Hist@SampPars$Stock$M_ageArray[, , 1:nyears], 1:2, mean)
+  Wt <- apply(Hist@SampPars$Stock$Wt_age[, , 1:nyears], 1:2, mean)
+  Mat <- apply(Hist@SampPars$Stock$Mat_age[, , 1:nyears], 1:2, mean)
+  Fec <- apply(Hist@SampPars$Stock$Fec_Age[, , 1:nyears], 1:2, mean)
+  V <- rep(1, maxage + 1)
+  R0 <- Hist@SampPars$Stock$R0
+  h <- Hist@SampPars$Stock$hs
+  SRrel <- Hist@OM@SRrel
+  phi <- Hist@SampPars$Stock$SSBpR[, 1]
+  
+  sapply(1:Hist@OM@nsim, function(x) {
+    MSEtool:::MSYCalcs(logF = 0, M_at_Age = M[x, ], Wt_at_Age = Wt[x, ], Mat_at_Age = Mat[x, ], Fec_at_Age = Fec[x, ], V_at_Age = V, 
+                       maxage = maxage, R0x = R0[x], SRrelx = SRrel, hx = h[x], SSBpR = phi[x], opt = 0L)["SB0"]
+  })
+}
 
 iSCAM_SSB0 <- function(MSE, frac, year_range, Hist = FALSE) {
   
-  SSB0 <- local({
-    nyears <- MSE@nyears
-    maxage <- MSE@Hist@OM@maxage
-    
-    M <- apply(MSE@Hist@SampPars$Stock$M_ageArray[, , 1:nyears], 1:2, mean)
-    Wt <- apply(MSE@Hist@SampPars$Stock$Wt_age[, , 1:nyears], 1:2, mean)
-    Mat <- apply(MSE@Hist@SampPars$Stock$Mat_age[, , 1:nyears], 1:2, mean)
-    Fec <- apply(MSE@Hist@SampPars$Stock$Fec_Age[, , 1:nyears], 1:2, mean)
-    V <- rep(1, maxage + 1)
-    R0 <- MSE@Hist@SampPars$Stock$R0
-    h <- MSE@Hist@SampPars$Stock$hs
-    SRrel <- MSE@Hist@OM@SRrel
-    phi <- MSE@Hist@SampPars$Stock$SSBpR[, 1]
-    
-    sapply(1:MSE@nsim, function(x) {
-      MSEtool:::MSYCalcs(logF = 0, M_at_Age = M[x, ], Wt_at_Age = Wt[x, ], Mat_at_Age = Mat[x, ], Fec_at_Age = Fec[x, ], V_at_Age = V, 
-                         maxage = maxage, R0x = R0[x], SRrelx = SRrel, hx = h[x], SSBpR = phi[x], opt = 0L)["SB0"]
-    })
-  })
   caption <- paste0("Probability~SSB/~\"iSCAM\"~SSB[0]>", frac)
   label <- caption %>% strsplit("~") %>% getElement(1) %>% paste(collapse = " ")
-  ref <- SSB0
+  ref <- .iSCAM_SSB0(MSE@Hist)
   
   if(Hist) {
     yr <- seq(MSE@OM$CurrentYr[1] - MSE@nyears + 1, MSE@OM$CurrentYr[1])
