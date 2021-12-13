@@ -2,8 +2,6 @@
 
 library(SAMtool)
 
-source("00_performance_measures.R")
-
 nsim <- 48
 OM <- RPC::DFO_WCVI_Herring_2019 %>% SubCpars(1:nsim)
 OM@cpars$Data@vbt0 <- NA
@@ -25,6 +23,28 @@ saveRDS(MSE, file = "Pherring/Pherring_M.rds")
 
 MSE <- readRDS("Pherring/Pherring_M.rds")
 
+
+##### Calculate F such that P(SH) = 0.95
+source("00_Fopt.R")
+
+# Show historical probability of serious harm
+type <- c("HistSSB", "iSCAM_SSB0", "SSBMSY", "depletion", "50%Rmax", "90%RS")
+frac <- c(1, 0.3, 0.4, 0.3, 1, 1)
+HistSSB_y <- 2010
+
+if(!snowfall::sfIsRunning()) setup(length(type))
+sfExportAll()
+sfLibrary(dplyr)
+sfLibrary(MSEtool)
+FSH_abs <- sfLapply(1:length(type), function(x) {
+  Fopt(Hist, LRP_type = type[x], frac = frac[x], F_type = "abs", HistSSB_y = HistSSB_y, dep_type = "Dynamic", p = 0.95)
+})
+saveRDS(FSH_abs, file = "Pherring/Pherring_FP95_abs.rds")
+FSH_M <- sfLapply(1:length(type), function(x) {
+  Fopt(Hist, LRP_type = type[x], frac = frac[x], F_type = "M", HistSSB_y = HistSSB_y, dep_type = "Dynamic", p = 0.95, F_search = seq(0.01, 4, 0.01))
+})
+saveRDS(FSH_M, file = "Pherring/Pherring_FP95_M.rds")
+sfStop()
 
 ##### Second step - test two different HCRs
 # See Table 1 of https://waves-vagues.dfo-mpo.gc.ca/Library/40760133.pdf

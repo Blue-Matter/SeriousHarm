@@ -1,7 +1,7 @@
 
 library(MSEtool)
 
-nsim <- 3
+nsim <- 48
 OM <- RPC::DFO_Pacific_Cod_2020 %>% SubCpars(1:nsim)
 OM@interval <- 200
 Hist <- runMSE(OM, Hist = TRUE, parallel = TRUE)
@@ -32,14 +32,19 @@ type <- c("HistSSB", "iSCAM_SSB0", "SSBMSY", "depletion", "50%Rmax", "90%RS")
 frac <- c(1, 0.3, 0.4, 0.3, 1, 1)
 HistSSB_y <- 2000
 
-setup(length(type))
+if(!snowfall::sfIsRunning()) setup(length(type))
 sfExportAll()
 sfLibrary(dplyr)
 sfLibrary(MSEtool)
-FSH <- lapply(1:length(type), function(x) {
-  Fopt(Hist, type = type[x], frac = frac[x], F_type = "abs", HistSSB_y = HistSSB_y, dep_type = "Dynamic")
+FSH_abs <- sfLapply(1:length(type), function(x) {
+  Fopt(Hist, LRP_type = type[x], frac = frac[x], F_type = "abs", HistSSB_y = HistSSB_y, dep_type = "Dynamic", p = 0.95)
 })
-saveRDS(FSH, file = "FSH_pcod.rds")
+saveRDS(FSH_abs, file = "Pcod/Pcod_FP95_abs.rds")
+FSH_M <- sfLapply(1:length(type), function(x) {
+  Fopt(Hist, LRP_type = type[x], frac = frac[x], F_type = "M", HistSSB_y = HistSSB_y, dep_type = "Dynamic", p = 0.95, F_search = seq(0.01, 4, 0.01))
+})
+saveRDS(FSH_M, file = "Pcod/Pcod_FP95_M.rds")
+sfStop()
 
 
 ##### Second step - test two different HCRs
