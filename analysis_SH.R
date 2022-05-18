@@ -1,0 +1,93 @@
+
+SH <- readxl::read_excel('Report/Seriousharm_estimates_import.xlsx')
+SH <- SH[order(SH$`B[ESH]/B[init]`), ] %>% 
+  #mutate(St = paste0("(", 1:nrow(SH), ")")) %>% 
+  mutate(St = 1:nrow(SH)) 
+
+SH_order <- SH %>% 
+  reshape2::melt(id.vars = c("Stock", "St", "Year_assess", "B[ESH]/B[init]", "tv")) %>%
+  mutate(value = ifelse(value > 2, 2, value)) %>%
+  filter(!is.na(value))
+
+g <- ggplot(SH_order, aes(`B[ESH]/B[init]`, value)) + 
+  #geom_smooth() + 
+  geom_text(aes(label = St), size = 3) + 
+  #geom_point() +
+  #ggrepel::geom_text_repel(aes(label = St)) + 
+  geom_hline(yintercept = 0.001) + 
+  theme_bw() + 
+  theme(legend.position = "none") + 
+  facet_wrap(vars(variable), scales = "free_y", labeller = label_parsed) +
+  coord_cartesian(xlim = c(0.01, 1)) +
+  expand_limits(y = 0) + 
+  labs(x = expression(B[ESH]/B[init]))
+ggsave("Figures/meta/Binit.png", g, height = 5, width = 7)
+
+g <- ggplot(SH_order, aes(`B[ESH]/B[init]`, value)) + 
+  geom_smooth() + 
+  geom_text(aes(label = St), size = 3) + 
+  #geom_point() +
+  #ggrepel::geom_text_repel(aes(label = St)) + 
+  geom_hline(yintercept = 0.001) + 
+  theme_bw() + 
+  theme(legend.position = "none") + 
+  facet_wrap(vars(variable), scales = "free_y", labeller = label_parsed) +
+  coord_cartesian(xlim = c(0.01, 1)) +
+  expand_limits(y = 0) + 
+  labs(x = expression(B[ESH]/B[init]))
+ggsave("Figures/meta/Binit_smooth.png", g, height = 5, width = 7)
+
+
+g <- ggplot(SH_order, aes(`B[ESH]/B[init]`, value, colour = as.factor(tv))) + 
+  #geom_smooth() + 
+  geom_text(aes(label = St), size = 3) + 
+  #geom_point() +
+  #ggrepel::geom_text_repel(aes(label = St)) + 
+  geom_hline(yintercept = 0) + 
+  theme_bw() + 
+  theme(legend.position = "none") + 
+  facet_wrap(vars(variable), scales = "free_y", labeller = label_parsed) +
+  coord_cartesian(xlim = c(0, 1)) +
+  labs(x = expression(B[ESH]/B[init])) +
+  scale_colour_manual(values = c("0" = "black", "1" = "red"))
+ggsave("Figures/meta/Binit_tv.png", g, height = 5, width = 7)
+
+
+
+
+
+
+
+SH_pairs <- reshape2::acast(SH_order, list("St", "variable"))
+
+panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...) {
+  usr <- par("usr"); on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  val <- cor(x, y, use = "complete.obs")
+  r <- abs(val)
+  txt <- format(c(val, 0.123456789), digits = digits)[1]
+  txt <- paste0(prefix, txt)
+  #if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
+  #text(0.5, 0.5, txt, cex = cex.cor * r)
+  text(0.5, 0.5, txt, cex = 2)
+}
+
+text2 <- function(x, y, ...) {
+  text(x, y, labels = rownames(SH_pairs), col = ifelse(SH$tv, "red", "black"),
+       xlim = c(0, 1.1 * max(x)), ylim = c(0, 1.1 * max(y)))
+}
+
+png("Figures/meta/Fpairs_tv.png", height = 6, width = 6, units = "in", res = 400)
+pairs(SH_pairs[, 1:4], panel = text2,
+      labels = colnames(SH_pairs)[1:4] %>% parse(text = .),
+      gap = 0,
+      lower.panel = panel.cor)
+dev.off()
+
+png("Figures/meta/Bpairs_tv.png", height = 6, width = 6, units = "in", res = 400)
+pairs(SH_pairs[, -c(1:4)], panel = text2,
+      #pch = ifelse(SH$tv, 16, 1),
+      labels = colnames(SH_pairs)[-c(1:4)] %>% parse(text = .),
+      gap = 0,
+      lower.panel = panel.cor)
+dev.off()
