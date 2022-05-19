@@ -14,6 +14,7 @@ SW <- get_ref_pt(Hist, OM,
                  Yr_SRP = 2002,  # Year corresponding to ICES Blim (Type 5, no B_SR)
                  Yr_Fmed = 1979, # First year for calculating median R/S
 )
+#SW$RPts$SB_recover <- SW$Assess$SB_recover <- NA
 saveRDS(SW, file = "LRP/LRP_ICCAT_SWO.rds")
 SW <- readRDS(file = "LRP/LRP_ICCAT_SWO.rds")
 
@@ -100,6 +101,7 @@ RP <- get_ref_pt(Hist, OM,
                  Yr_SRP = "hockey_stick",  # Year corresponding to ICES Blim
                  #Yr_Fmed = 1990 # First year for calculating median R/S
 )
+RP$Assess$SB_recover <- RP$RPts$SB_recover <- RP$RPvars$Yr_Brecover <- NA
 
 saveRDS(RP, file = "LRP/LRP_SA_RedPorgy.rds")
 RP <- readRDS(file = "LRP/LRP_SA_RedPorgy.rds")
@@ -122,7 +124,7 @@ CC <- get_ref_pt(Hist, OM,
                   Yr_SRP = NA #,  # Year corresponding to ICES Blim
                   #Yr_Fmed = 1983 # First year for calculating median R/S
 )
-
+CC$Assess$SB_SRP <- CC$RPts$SB_SRP <- NA
 saveRDS(CC, file = "LRP/LRP_SCB_cowcod.rds")
 CC <- readRDS(file = "LRP/LRP_SCB_cowcod.rds")
 
@@ -145,7 +147,7 @@ HOM <- get_ref_pt(Hist, OM,
                   Yr_SRP = 2017,  # Year corresponding to ICES Blim
                   Yr_Fmed = 1982 # First year for calculating median R/S
 )
-
+HOM$Assess$SB_recover <- HOM$RPts$SB_recover <- HOM$RPvars$Yr_Brecover <- NA
 saveRDS(HOM, file = "LRP/LRP_NEA_hom.rds")
 HOM <- readRDS(file = "LRP/LRP_NEA_hom.rds")
 
@@ -175,7 +177,7 @@ DB <- get_ref_pt(Hist, OM,
                  Yr_SRP = 2010,  # Year corresponding to ICES Blim
                  Yr_Fmed = 1970 # First year for calculating median R/S
 )
-
+DB$Assess$SB_recover <- DB$RPts$SB_recover <- DB$RPvars$Yr_Brecover <- NA
 
 saveRDS(DB, file = "LRP/LRP_WC_darkblotched.rds")
 DB <- readRDS(file = "LRP/LRP_WC_darkblotched.rds")
@@ -317,6 +319,54 @@ plot_SP(GSLH)
 OM <- readRDS(file = "OM/OM_NAFO_plaice.rds")
 Hist <- SubCpars(OM, 1:2) %>% runMSE(Hist = TRUE)
 
+# Calculate reference points with M = 0.2 in years where population M = 0.53 (temporary)
+for(y in 1:OM@nyears) {
+  if(any(OM@cpars$M_ageArray[1, , y] > 0.2)) {
+    
+    MSYs <- local({
+      OM@cpars$M_ageArray[1, , y] <- OM@cpars$M_ageArray[1, , 1]
+      optMSY_eq(1, 
+                M_ageArray = OM@cpars$M_ageArray,
+                Wt_age = OM@cpars$Wt_age,
+                Mat_age = OM@cpars$Mat_age,
+                Fec_age = OM@cpars$Mat_age * OM@cpars$Wt_age,
+                V = OM@cpars$V,
+                maxage = OM@maxage,
+                R0 = OM@cpars$R0,
+                SRrel = OM@SRrel,
+                hs = OM@cpars$hs,
+                SSBpR = Hist@SampPars$Stock$SSBpR,
+                yr.ind = y,
+                plusgroup = 1)
+    })
+    
+    Fcalc <- local({
+      OM@cpars$M_ageArray[1, , y] <- OM@cpars$M_ageArray[1, , 1]
+      boundsF <- c(1E-3, 3)
+      F_search <- exp(seq(log(min(boundsF)), log(max(boundsF)), length.out = 50))
+      Ref_search <- MSEtool:::Ref_int_cpp(F_search, 
+                                M_at_Age = OM@cpars$M_ageArray[1, , y],
+                                Wt_at_Age = OM@cpars$Wt_age[1, , y], 
+                                Mat_at_Age = OM@cpars$Mat_age[1, , y],
+                                Fec_at_Age = OM@cpars$Wt_age[1, , y] * OM@cpars$Mat_age[1, , y],
+                                V_at_Age = OM@cpars$V[1, , y],
+                                maxage = OM@maxage,
+                                plusgroup = 1)
+      RPS <- Ref_search[3,]
+      SSB <- Hist@TSdata$SBiomass[1, , ] %>% rowSums()
+      R <- Hist@AtAge$Number[1, 1, , ] %>% rowSums()
+      Fmed <- MSEtool:::LinInterp_cpp(RPS, F_search, xlev = median(R/SSB))
+      Fmed
+    })
+    
+    Hist@Ref$ByYear$FMSY[1, y] <- MSYs["F"]
+    Hist@Ref$ByYear$SSBMSY[1, y] <- MSYs["SB"]
+    Hist@Ref$ByYear$SSB0[1, y] <- MSYs["SB0"]
+    
+    Hist@Ref$ByYear$Fmed[1, y] <- Fcalc
+  }
+}
+
 PL <- get_ref_pt(Hist, OM, 
                  Year_assess = 1994, # Fishing moratorium
                  Name = "NAFO~American~plaice",
@@ -325,6 +375,10 @@ PL <- get_ref_pt(Hist, OM,
                  Yr_SP = 1993
 )
 
+
+PL$RPts$SB_recover <- PL$RPts$SB[17]
+PL$Assess$SB_recover <- PL$RPts$SB[35]/ PL$RPts$SB[17]
+PL$RPvars$Yr_Brecover <- 1976
 
 saveRDS(PL, file = "LRP/LRP_NAFO_plaice.rds")
 PL <- readRDS(file = "LRP/LRP_NAFO_plaice.rds")
@@ -353,6 +407,9 @@ NAFOcod <- get_ref_pt(Hist, OM,
                       #Yr_Fmed = 1960, # First year for calculating median R/S
                       Yr_SP = 1991
 )
+NAFOcod$RPts$SB_recover <- NAFOcod$RPts$SB[18]
+NAFOcod$Assess$SB_recover <- NAFOcod$RPts$SB[36]/ NAFOcod$RPts$SB[18]
+NAFOcod$RPvars$Yr_Brecover <- 1976
 
 saveRDS(NAFOcod, file = "LRP/LRP_NAFO_cod.rds")
 NAFOcod <- readRDS(file = "LRP/LRP_NAFO_cod.rds")
@@ -381,6 +438,9 @@ GoM_cod <- get_ref_pt(Hist, OM,
                       #Yr_Fmed = 1960, # First year for calculating median R/S
                       Yr_SP = 2011
 )
+GoM_cod$RPts$SB_recover <- GoM_cod$RPts$SB[13]
+GoM_cod$Assess$SB_recover <- GoM_cod$RPts$SB[24]/ GoM_cod$RPts$SB[13]
+GoM_cod$RPvars$Yr_Brecover <- 1994
 
 saveRDS(GoM_cod, file = "LRP/LRP_GoM_cod.rds")
 GoM_cod <- readRDS(file = "LRP/LRP_GoM_cod.rds")
@@ -402,9 +462,10 @@ Hist <- SubCpars(OM, 1:2) %>% runMSE(Hist = TRUE)
 BET <- get_ref_pt(Hist, OM, 
                   Year_assess = 2018, # ICCAT resolutions and lobbying
                   Name = "Atlantic~bigeye~tuna",
-                  Yr_SRP = NA,  # Year corresponding to ICES Blim
+                  Yr_SRP = 2011,  # Year corresponding to ICES Blim
                   Yr_Fmed = 1973 # First year for calculating median R/S
 )
+BET$Assess$SB_SRP <- BET$RPts$SB_SRP <- NA
 
 saveRDS(BET, file = "LRP/LRP_ICCAT_BET.rds")
 BET <- readRDS(file = "LRP/LRP_ICCAT_BET.rds")
@@ -441,44 +502,5 @@ plot_SR_LRP(WCVI)
 plot_SP(WCVI)
 
 
-
-
-
-
-
-
-
-
-
-# Plot all historical figures
-stocks <- c("ICCAT_SWO", "GoM_RS", "NE_redfish", "GoM_haddock", "SA_RedPorgy", "SCB_cowcod", "NEA_hom", 
-            "WC_darkblotched", "WC_pop", "sGSL_cod", "sGSL_herring", "NAFO_plaice", "NAFO_cod", "GoM_cod",
-            "ICCAT_BET", "WCVI_herring")
-
-for(i in stocks) {
-  LRP <- readRDS(file = paste0("LRP/LRP_", i, ".rds"))
-  g <- plot_Hist(LRP)
-  ggsave(paste0("Figures/Hist/", i, ".png"), g, height = 6, width = 4)
-}
-
-
-for(i in stocks) {
-  LRP <- readRDS(file = paste0("LRP/LRP_", i, ".rds"))
-  g <- plot_SP(LRP)
-  ggsave(paste0("Figures/SP/SP_", i, ".png"), g, height = 6, width = 4)
-}
-
-
-for(i in stocks) {
-  LRP <- readRDS(file = paste0("LRP/LRP_", i, ".rds"))
-  message(i)
-  message(LRP$RPts$SB[LRP$RPts$Year == LRP$Assess$Year]/LRP$RPts$SB[1])
-}
-
-for(i in stocks) {
-  LRP <- readRDS(file = paste0("LRP/LRP_", i, ".rds"))
-  message(i)
-  message(length(unique(LRP$RPts$phi0)))
-}
 
 

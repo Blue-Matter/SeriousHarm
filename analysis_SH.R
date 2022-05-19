@@ -6,7 +6,7 @@ SH <- SH[order(SH$`B[ESH]/B[init]`), ] %>%
 
 SH_order <- SH %>% 
   reshape2::melt(id.vars = c("Stock", "St", "Year_assess", "B[ESH]/B[init]", "tv")) %>%
-  mutate(value = ifelse(value > 2, 2, value)) %>%
+  mutate(value = ifelse(value > 5, 5, value)) %>%
   filter(!is.na(value))
 
 g <- ggplot(SH_order, aes(`B[ESH]/B[init]`, value)) + 
@@ -91,3 +91,5 @@ pairs(SH_pairs[, -c(1:4)], panel = text2,
       gap = 0,
       lower.panel = panel.cor)
 dev.off()
+
+
