@@ -19,8 +19,8 @@ get_ref_pt <- function(Hist, OM, Year_assess,
               Fec = Hist@SampPars$Stock$Fec_Age[1, , y])
   })
   
-  
-  SP <- RPC:::hist_BvsSP(Hist, FALSE)[, "Median"]
+  # browser
+  SP <- RPC::LRP_SP(Hist, "none")$Quantile[, "Median"]
   B <- Hist@TSdata$Biomass[1, , ] %>% rowSums()
   
   SBMSY <- Hist@Ref$ByYear$SSBMSY[1, 1:OM@nyears]
@@ -260,7 +260,9 @@ plot_SR_LRP <- function(..., year = FALSE) {
       select(Year, SB, R, Stock) 
     
     vout <- rbind(v, v) %>% mutate(Panel = c("SRP", "SRR") %>% rep(each = nrow(v))) %>%
-      filter(Panel == "SRR" | Year >= dots[[i]]$RPvars["Yr_Fmed"] %>% as.numeric())
+      filter(Panel == "SRR" | Year >= dots[[i]]$RPvars["Yr_Fmed"] %>% as.numeric()) %>%
+      mutate(fill = ifelse(Year < dots[[i]]$Assess$Year, "grey", 
+                           ifelse(Year == dots[[i]]$Assess$Year, "black", "white")))
     
     SRpred <- dots[[i]]$SRpred %>% mutate(Stock = dots[[i]]$RPvars$Stock, Panel = "SRR")
     
@@ -270,29 +272,41 @@ plot_SR_LRP <- function(..., year = FALSE) {
     SRRvars <- as.data.frame(dots[[i]]$RPvars) %>% mutate(Panel = "SRR")
     
     g <- ggplot(vout, aes(SB, R)) + 
-      geom_point(shape = 21, fill = "grey") + 
-      geom_abline(data = SRPvars, 
-                  aes(intercept = 0, slope = RpS_med)) + 
-      geom_segment(data = SRPvars, inherit.aes = FALSE, x = 0, y = 0, linetype = 2,
-                   aes(xend = SB_90, yend = R_90)) + 
-      geom_segment(data = SRPvars, inherit.aes = FALSE, x = 0, linetype = 2,
+      geom_point(aes(fill = fill), shape = 21) + 
+      #geom_abline(data = SRPvars, aes(intercept = 0, slope = RpS_med)) +  # Median recruits per spawner line
+      geom_segment(data = SRPvars,                                        # 90 percentile R/S, and S
+                   inherit.aes = FALSE, 
+                   x = 0, y = 0, 
+                   linetype = 2,
+                   aes(xend = SB_90, yend = R_90)) +                      # 90 percentile R/S, and S
+      geom_segment(data = SRPvars, 
+                   inherit.aes = FALSE, 
+                   x = 0, linetype = 2,
                    aes(xend = SB_90, y = R_90, yend = R_90)) + 
-      geom_point(data = SRPvars, inherit.aes = FALSE, shape = 15, size = 3, #col = "red",
+      geom_point(data = SRPvars,                                          # 90 percentile R/S, and S
+                 inherit.aes = FALSE,    
+                 shape = 15, size = 3,
                  aes(x = SB_90, y = R_90)) + 
-      geom_segment(data = SRRvars, inherit.aes = FALSE, x = 0, linetype = 3,
+      geom_segment(data = SRRvars,                                        # SSB at 50% Rmax
+                   inherit.aes = FALSE, 
+                   x = 0, linetype = 3,
                    aes(xend = SBRmax50, y = Rmax50, yend = Rmax50)) + 
-      geom_segment(data = SRRvars, inherit.aes = FALSE, y = 0, linetype = 3,
+      geom_segment(data = SRRvars,                                        # SSB at 50% Rmax
+                   inherit.aes = FALSE, 
+                   y = 0, linetype = 3,
                    aes(x = SBRmax50, xend = SBRmax50, yend = Rmax50)) + 
-      geom_line(data = SRpred) + 
-      geom_point(data = SRRvars, inherit.aes = FALSE, shape = 15, size = 3, #col = "red",
-                   aes(x = SBRmax50, y = Rmax50)) + 
+      geom_line(data = SRpred) +                                          # Stock-recruit relationship
+      geom_point(data = SRRvars, 
+                 inherit.aes = FALSE, 
+                 shape = 15, size = 3, #col = "red",
+                 aes(x = SBRmax50, y = Rmax50)) + 
       facet_grid(cols = vars(Stock), rows = vars(Panel), labeller = label_parsed, scales = "free_x") + 
       expand_limits(x = 0, y = 0) + 
       theme_bw() +
       labs(y = "Recruitment") + 
       theme(strip.background = element_rect(fill = NA, colour = NA), 
-            strip.placement = "outside")
-            #panel.spacing.y = unit(0, "in"))
+            strip.placement = "outside") +
+      scale_fill_identity()
     
     if(year) g <- g + ggrepel::geom_text_repel(aes(label = Year))
     g
@@ -309,11 +323,13 @@ plot_SP <- function(..., year = TRUE) {
     
     v <- dots[[i]]$SP %>% filter(!is.na(SP)) %>% mutate(SP_B = SP/B) %>% 
       rename(`Surplus~production~(SP)` = SP, `SP/B` = SP_B) %>% reshape2::melt(id.vars = c("Year", "B")) %>%
-      mutate(Stock = dots[[i]]$RPvars$Stock)
+      mutate(Stock = dots[[i]]$RPvars$Stock, 
+             fill = ifelse(Year < dots[[i]]$Assess$Year, "grey", 
+                           ifelse(Year == dots[[i]]$Assess$Year, "black", "white")))
     
     g <- ggplot(v, aes(B, value)) + 
       geom_path() + 
-      geom_point(shape = 21, fill = "grey") +
+      geom_point(aes(fill = fill), shape = 21) +
       geom_hline(yintercept = 0, linetype = 2) + 
       facet_grid(vars(variable), vars(Stock), labeller = label_parsed, scales = "free_y", switch = "y") + 
       expand_limits(x = 0, y = 0) + 
@@ -322,7 +338,8 @@ plot_SP <- function(..., year = TRUE) {
             strip.placement = "outside",
             axis.title.y = element_blank(),
             panel.spacing.y = unit(0, "in")) + 
-      labs(x = "Biomass (B)")
+      labs(x = "Biomass (B)") +
+      scale_fill_identity()
     if(year) g <- g + ggrepel::geom_text_repel(aes(label = Year))
     g
   })
@@ -331,7 +348,8 @@ plot_SP <- function(..., year = TRUE) {
 }
 
 
-SRR <- function(x, R, S, rel = c("hockey_stick", "Ricker", "BH"), opt = TRUE, figure = TRUE) {
+SRR <- function(x, R, S, rel = c("hockey_stick", "Ricker", "BH", "sBH"), 
+                opt = TRUE, figure = TRUE, delta) {
   
   rel <- match.arg(rel)
   
@@ -341,10 +359,15 @@ SRR <- function(x, R, S, rel = c("hockey_stick", "Ricker", "BH"), opt = TRUE, fi
     beta <- exp(x[1])/mean(S)
   }
   
+  if(rel == "sBH" && missing(delta)) {
+    delta <- x[2]
+  }
+  
   f_S <- switch(rel,
                 "hockey_stick" = ifelse(S <= Scp, S, Scp),
                 "Ricker" = S * exp(-beta * S),
-                "BH" = S / (1 + beta * S)
+                "BH" = S / (1 + beta * S),
+                "sBH" = S ^ delta / (1 + (beta * S)^delta) # K = 1/beta
   )
   
   alpha <- mean(log(R/f_S)) %>% exp()
@@ -367,14 +390,19 @@ SRR <- function(x, R, S, rel = c("hockey_stick", "Ricker", "BH"), opt = TRUE, fi
       out$beta <- beta
     }
     
+    if(rel == "sBH") {
+      out$delta <- delta
+    }
+    
     if(figure) {
       plot(S, R, xlab = "Spawners", ylab = "Recruitment", xlim = c(0, 1.1 * max(S)), ylim = c(0, 1.1 * max(R)))
       
       Splot <- seq(0, 1.1 * max(S), length.out = 100)
       Rplot <- alpha * switch(rel,
-                      "hockey_stick" = ifelse(Splot <= Scp, Splot, Scp),
-                      "Ricker" = Splot * exp(-beta * Splot),
-                      "BH" = Splot / (1 + beta * Splot)
+                              "hockey_stick" = ifelse(Splot <= Scp, Splot, Scp),
+                              "Ricker" = Splot * exp(-beta * Splot),
+                              "BH" = Splot / (1 + beta * Splot),
+                              "sBH" = Splot^delta / (1 + (beta * Splot)^delta)
       )
       lines(Splot, Rplot, col = 'red')
     }

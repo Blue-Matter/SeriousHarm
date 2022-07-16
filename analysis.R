@@ -172,7 +172,7 @@ Hist <- SubCpars(OM, 1:2) %>% runMSE(Hist = TRUE)
 
 
 DB <- get_ref_pt(Hist, OM, 
-                 Year_assess = 2000, # Declared overfished
+                 Year_assess = 2003, # Declared overfished
                  Name = "U.S.~Darkblotched~rockfish",
                  Yr_SRP = 2010,  # Year corresponding to ICES Blim
                  Yr_Fmed = 1970 # First year for calculating median R/S
@@ -196,11 +196,10 @@ OM <- readRDS(file = "OM/OM_WC_pop.rds")
 Hist <- SubCpars(OM, 1:2) %>% runMSE(Hist = TRUE)
 
 POP <- get_ref_pt(Hist, OM, 
-                  Year_assess = 1999, # Declared overfished
+                  Year_assess = 2001, # Declared overfished
                   Name = "U.S.~Pacific~ocean~perch",
-                  Yr_SRP = "hockey_stick",  # Year corresponding to ICES Blim
-                  Yr_Fmed = 1965, # First year for calculating median R/S
-                  BSRP = 61268
+                  Yr_SRP = 1987,  # Year corresponding to ICES Blim
+                  Yr_Fmed = 1965 # First year for calculating median R/S
 )
 
 saveRDS(POP, file = "LRP/LRP_WC_pop.rds")
@@ -502,5 +501,28 @@ plot_SR_LRP(WCVI)
 plot_SP(WCVI)
 
 
+# EBS cod
+OM <- readRDS(file = "OM/OM_EBS_cod.rds")
+Hist <- SubCpars(OM, 1:2) %>% runMSE(Hist = TRUE)
 
+EBScod <- get_ref_pt(Hist, OM, 
+                     Year_assess = 2019, # zero catch advised https://doi.org/10.17895/ices.advice.4747
+                     Name = "E.B.S.~Atlantic~cod",
+                     Yr_SRP = 2012,  # Year corresponding to ICES Blim
+                     Yr_Fmed = 1946, # First year for calculating median R/S
+                     Yr_SP = 2012
+)
+EBScod$RPts$SB_recover <- EBScod$RPts$SB[15]
+EBScod$Assess$SB_recover <- EBScod$RPts$SB[74]/ EBScod$RPts$SB[15]
+EBScod$RPvars$Yr_Brecover <- 1960
+
+
+saveRDS(EBScod, file = "LRP/LRP_EBS_cod.rds")
+plot_F(EBScod)
+plot_B(EBScod)
+plot_SR(EBScod)
+plot_Hist(EBScod)
+plot_SR_LRP(EBScod)
+
+plot_SP(EBScod)
 
