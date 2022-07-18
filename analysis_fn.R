@@ -415,3 +415,31 @@ calc_phi0 <- function(M, Wt, Mat, Fec) {
   1/MSEtool:::Ref_int_cpp(1e-8, M, Wt, Mat, Fec, rep(0, length(M)), length(M) - 1)[3, 1]
 }
 
+plot_ts <- function(LRP) {
+  v <- LRP$RPts %>% group_by(Year) %>%
+    mutate(`F/F[MSY]` = FM/FMSY, 
+           `SB/SB[MSY]` = SB/SBMSY, `SB/SB[0~eq]` = SB/SB0, `SB/SB[0~dyn]` = SB/SB0dyn,
+           `SPR[eq]` = SPR, `SPR[dyn]` = SPRdyn, `SB/SB[recover]` = SB/SB_recover,
+           .keep = "none"
+    ) %>%
+    left_join(LRP$SP, by = "Year") %>% 
+    mutate(`SP/B` = SP/B) %>%
+    select(!B) %>%
+    reshape2::melt(id.var = "Year")
+  
+  g <- ggplot(v, aes(Year, value)) + 
+    geom_path() + 
+    #geom_point() +
+    geom_vline(xintercept = LRP$Assess$Year, linetype = 2) + 
+    facet_wrap(vars(variable), labeller = label_parsed, scales = "free_y", strip.position = "left") + 
+    expand_limits(y = 0) + 
+    theme_bw() +
+    theme(strip.background = element_rect(fill = NA, colour = NA), 
+          strip.placement = "outside",
+          axis.title.y = element_blank(),
+          panel.spacing.y = unit(0, "in")) +
+    ggtitle(parse(text = LRP$RPts$Stock %>% unique()))
+  
+  g
+}
+

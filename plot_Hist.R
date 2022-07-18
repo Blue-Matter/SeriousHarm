@@ -8,7 +8,7 @@ stocks <- c("ICCAT_SWO", "GoM_RS", "NE_redfish", "GoM_haddock", "SA_RedPorgy", "
             "WC_darkblotched", "WC_pop", "sGSL_cod", "sGSL_herring", "NAFO_plaice", "NAFO_cod", "GoM_cod",
             "ICCAT_BET", "WCVI_herring", "EBS_cod")
 
-stocks <- c("WC_darkblotched", "WC_pop")
+
 for(i in stocks) {
   
   LRP <- readRDS(file = paste0("LRP/LRP_", i, ".rds"))
@@ -28,5 +28,7 @@ for(i in stocks) {
   g <- plot_SR_LRP(LRP, year = TRUE)
   ggsave(paste0("Figures/SRR/SP_", i, ".png"), g, height = 4, width = 4)
   
+  g <- plot_ts(LRP)
+  ggsave(paste0("Figures/ts/ts_", i, ".png"), g, height = 4, width = 8)
 }
 
