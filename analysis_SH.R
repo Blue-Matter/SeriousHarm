@@ -1,5 +1,7 @@
 
-SH <- readxl::read_excel('Report/Seriousharm_estimates_import.xlsx') %>% select(!`F/F[rep]`)
+SH <- readxl::read_excel('Report/Seriousharm_estimates_import.xlsx') %>% select(!`F/F[rep]`) %>%
+  filter(Stock != "US Pacific ocean perch" & Stock != "GM haddock")
+
 SH <- SH[order(SH$`B[ESH]/B[init]`), ] %>% 
   #mutate(St = paste0("(", 1:nrow(SH), ")")) %>% 
   mutate(St = 1:nrow(SH)) 
@@ -15,8 +17,11 @@ g <- ggplot(SH_order, aes(`B[ESH]/B[init]`, value)) +
   #geom_point() +
   #ggrepel::geom_text_repel(aes(label = St)) + 
   theme_bw() + 
-  theme(legend.position = "none") + 
-  facet_wrap(vars(variable), scales = "free_y", labeller = label_parsed) +
+  theme(legend.position = "none",
+        strip.background = element_rect(fill = NA, colour = NA), 
+        axis.title.y = element_blank(),
+        strip.placement = "outside") + 
+  facet_wrap(vars(variable), scales = "free_y", labeller = label_parsed, strip.position = "left") +
   coord_cartesian(xlim = c(0.01, 1)) +
   expand_limits(y = 0) + 
   labs(x = expression(B[ESH]/B[init]))
@@ -29,8 +34,11 @@ g <- ggplot(SH_order, aes(`B[ESH]/B[init]`, value)) +
   #ggrepel::geom_text_repel(aes(label = St)) + 
   #geom_hline(yintercept = 0.001) + 
   theme_bw() + 
-  theme(legend.position = "none") + 
-  facet_wrap(vars(variable), scales = "free_y", labeller = label_parsed) +
+  theme(legend.position = "none",
+        strip.background = element_rect(fill = NA, colour = NA), 
+        axis.title.y = element_blank(),
+        strip.placement = "outside") + 
+  facet_wrap(vars(variable), scales = "free_y", labeller = label_parsed, strip.position = "left") +
   coord_cartesian(xlim = c(0.01, 1)) +
   expand_limits(y = 0) + 
   labs(x = expression(B[ESH]/B[init]))
@@ -54,10 +62,14 @@ g <- ggplot(SH_order, aes(`B[ESH]/B[init]`, value)) +
             vjust = "inward", 
             hjust = "inward") + 
   theme_bw() + 
-  theme(legend.position = "none") + 
+  theme(legend.position = "none",
+        strip.background = element_rect(fill = NA, colour = NA), 
+        axis.title.y = element_blank(),
+        strip.placement = "outside") + 
   facet_wrap(vars(variable), 
              scales = "free_y", 
-             labeller = label_parsed) +
+             labeller = label_parsed,
+             strip.position = "left") +
   expand_limits(x = 0, y = 0) + 
   labs(x = expression(B[ESH]/B[init])) +
   scale_colour_manual(values = c("0" = "black", "1" = "red"))

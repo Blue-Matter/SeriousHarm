@@ -141,6 +141,35 @@ plot_SR_LRP(RP, year = TRUE)
 plot_SP(RP)
 
 
+# SA gag grouper
+OM <- readRDS(file = "OM/OM_SA_gag.rds")
+Hist <- SubCpars(OM, 1:2) %>% runMSE(Hist = TRUE)
+
+gag <- get_ref_pt(Hist, OM, 
+                  Year_assess = OM@CurrentYr, #
+                  Name = "S.A.~Gag~Grouper",
+                  Yr_SRP = "hockey_stick",  # Year corresponding to ICES Blim
+                  Yr_Fmed = 1976, # First year for calculating median R/S
+                  Yr_SP = 2006
+)
+gag$RPvars$Yr_Brecover <- 1988
+gag$RPts$SB_recover <- gag$RPts$SB[gag$RPts$Year == 1988]
+gag$Assess$SB_recover <- gag$RPts$SB[gag$RPts$Year == OM@CurrentYr]/gag$RPts$SB[gag$RPts$Year == 1987]
+
+saveRDS(gag, file = "LRP/LRP_SA_gag.rds")
+gag <- readRDS(file = "LRP/LRP_SA_gag.rds")
+
+plot_F(gag)
+plot_B(gag)
+plot_SR(gag)
+plot_Hist(gag)
+plot_SR_LRP(RP, year = TRUE)
+plot_SP(gag)
+
+
+
+
+
 # Cowcod
 OM <- readRDS(file = "OM/OM_SCB_cowcod.rds")
 Hist <- SubCpars(OM, 1:2) %>% runMSE(Hist = TRUE)
