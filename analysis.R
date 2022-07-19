@@ -70,25 +70,52 @@ plot_SR_LRP(AR)
 plot_SP(AR)
 
 # GoM Haddock
-OM <- readRDS("OM/OM_GoM_haddock.rds")
+#OM <- readRDS("OM/OM_GoM_haddock.rds")
+#Hist <- SubCpars(OM, 1:2) %>% runMSE(Hist = TRUE)
+#
+## No formal assessment between 1986-2001 overfished statement 
+## See Amendment 9 (1999)
+#HD <- get_ref_pt(Hist, OM, 
+#                 Year_assess = 1999, 
+#                 Name = "G.M.~haddock",
+#                 Yr_SRP = 2010,  # Year corresponding to ICES Blim
+#                 #Yr_Fmed = 1980  # First year for calculating median R/S
+#)
+#saveRDS(HD, file = "LRP/LRP_GoM_haddock.rds")
+#
+#plot_F(HD)
+#plot_B(HD)
+#plot_SR(HD)
+#plot_Hist(HD)
+#plot_SR_LRP(HD)
+#plot_SP(HD)
+
+# Southern New England yellowtail flounder
+OM <- readRDS("OM/OM_sne_yt.rds")
 Hist <- SubCpars(OM, 1:2) %>% runMSE(Hist = TRUE)
 
-# No formal assessment between 1986-2001 overfished statement 
-# See Amendment 9 (1999)
-HD <- get_ref_pt(Hist, OM, 
-                 Year_assess = 1999, 
-                 Name = "G.M.~haddock",
-                 Yr_SRP = 2010,  # Year corresponding to ICES Blim
-                 #Yr_Fmed = 1980  # First year for calculating median R/S
-)
-saveRDS(HD, file = "LRP/LRP_GoM_haddock.rds")
 
-plot_F(HD)
-plot_B(HD)
-plot_SR(HD)
-plot_Hist(HD)
-plot_SR_LRP(HD)
-plot_SP(HD)
+SNEYT <- get_ref_pt(Hist, OM, 
+                    Year_assess = 2005, # Framework 42
+                    Name = "S.N.E.~yellowtail~flounder",
+                    Yr_SRP = 1987,  # Year corresponding to ICES Blim
+                    Yr_SP = 1987,
+                    #Yr_Fmed = 1980  # First year for calculating median R/S
+)
+# B recover is SSB in 1987
+SNEYT$RPvars$Yr_Brecover <- 1987
+SNEYT$RPts$SB_recover <- SNEYT$RPts$SB[SNEYT$RPts$Year == 1987]
+SNEYT$Assess$SB_recover <- SNEYT$RPts$SB[SNEYT$RPts$Year == 2005]/SNEYT$RPts$SB[SNEYT$RPts$Year == 1987]
+
+saveRDS(SNEYT, file = "LRP/LRP_sne_yt.rds")
+
+plot_F(SNEYT)
+plot_B(SNEYT)
+plot_SR(SNEYT)
+plot_Hist(SNEYT)
+plot_SR_LRP(SNEYT)
+plot_SP(SNEYT)
+
 
 
 # SA red porgy
