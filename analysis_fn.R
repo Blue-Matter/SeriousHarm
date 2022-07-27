@@ -4,6 +4,7 @@ get_ref_pt <- function(Hist, OM, Year_assess,
                        Yr_SRP = Year[1],  # Year corresponding to ICES Blim
                        Yr_Fmed = Year[1], # First year for calculating median R/S
                        Yr_SP = NA,
+                       Yr_Brecover,
                        figure = FALSE, 
                        BSRP) {
   Year <- OM@CurrentYr - OM@nyears:1 + 1
@@ -19,7 +20,6 @@ get_ref_pt <- function(Hist, OM, Year_assess,
               Fec = Hist@SampPars$Stock$Fec_Age[1, , y])
   })
   
-  # browser
   SP <- RPC::LRP_SP(Hist, "none")$Quantile[, "Median"]
   B <- Hist@TSdata$Biomass[1, , ] %>% rowSums()
   
@@ -55,8 +55,12 @@ get_ref_pt <- function(Hist, OM, Year_assess,
   }
   
   
-  Yr_Brecover <- Year[which.min(SB)]
-  Brecover <- min(SB)
+  if(missing(Yr_Brecover)) Yr_Brecover <- Year[which.min(SB)]
+  if(!is.na(Yr_Brecover)) {
+    Brecover <- SB[Year == Yr_Brecover]
+  } else {
+    Brecover <- NA
+  }
   
   if(missing(BSRP)) {
     if(is.character(Yr_SRP)) {
@@ -99,7 +103,9 @@ get_ref_pt <- function(Hist, OM, Year_assess,
   
   RPts <- data.frame(Year = Year, FM = FM, FMSY = FMSY, Fmed = Fmed, SPR = SPR, SPRdyn = SPRdyn, R = R, 
                      SB = SB, SBMSY = SBMSY, SB0 = SB0, SB0dyn = SB0dyn, SB_SRP = BSRP, SB_recover = Brecover, SB_Rmax = SB_Rmax, 
-                     SB_90 = SB90, SB_SP = B_SP, phi0 = phi0) %>% mutate(Stock = Name)
+                     SB_90 = SB90, SB_SP = B_SP, phi0 = phi0,
+                     M = Hist@SampPars$Stock$Marray[1, 1:length(Year)]) %>% 
+    mutate(Stock = Name)
   
   RPvars <- data.frame(RpS_med = median(RpS[Year >= Yr_Fmed]), RpS_90 = RpS_90, R_90 = R_90, 
                        Yr_Brecover = Yr_Brecover, Rmax50 = Rmax$Rmax50[1], 
@@ -107,7 +113,8 @@ get_ref_pt <- function(Hist, OM, Year_assess,
   
   Assess <- local({
     a1 <- RPts[Year == Year_assess, ]
-    cbind(data.frame(Year = Year_assess), a1$FM/a1[, 3:4], a1["SPR"], a1["SPRdyn"], a1$SB/a1[, c(9:16)])
+    cbind(data.frame(Year = Year_assess), a1$FM/a1[, c("FMSY", "Fmed")], a1["SPR"], a1["SPRdyn"], 
+          a1$SB/a1[, c("SBMSY", "SB0", "SB0dyn", "SB_recover", "SB_Rmax", "SB_90", "SB_SP")])
   })
   print(Assess)
   print(RPvars)
@@ -202,21 +209,28 @@ plot_Hist <- function(...) {
   
   out <- lapply(1:length(dots), function(i) {
     v <- dots[[i]]$RPts %>% 
-      select(Year, SB, R, FM, Stock) %>% 
+      select(Year, SB, R, FM, M, Stock) %>% 
       rename(Recruitment = R, F = FM) %>%
-      reshape2::melt(id.vars = c("Year", "Stock")) 
+      reshape2::melt(id.vars = c("Year", "Stock")) %>%
+      mutate(Mort = ifelse(variable == "M", "M", "F"), 
+             variable = as.character(variable))
+    v$variable[v$variable == "M" | v$variable == "F"] <- "Mortality~rate"
     
     ggplot(v, aes(Year, value)) + 
-      geom_line() + 
-      facet_grid(rows = vars(variable), cols = vars(Stock), 
-                 labeller = label_parsed, scales = "free", switch = "y") + 
+      geom_line(aes(linetype = Mort)) + 
+      facet_grid(rows = vars(variable), 
+                 cols = vars(Stock), 
+                 labeller = label_parsed, 
+                 scales = "free", 
+                 switch = "y") + 
       expand_limits(y = 0) + 
       geom_vline(xintercept = dots[[i]]$Assess$Year, linetype = 2) + 
       theme_bw() +
       theme(strip.background = element_rect(fill = NA, colour = NA), 
             axis.title.y = element_blank(),
             panel.spacing = unit(0, "in"),
-            strip.placement = "outside")
+            strip.placement = "outside") +
+      labs(linetype = "Mortality\nrate")
   })
   
   cowplot::plot_grid(plotlist = out)
@@ -251,7 +265,7 @@ plot_SR <- function(..., year = TRUE) {
 
 
 
-plot_SR_LRP <- function(..., year = FALSE) {
+plot_SR_LRP <- function(..., year = FALSE, size = 2, box.padding = 0.1, min.segment.length = 0.3) {
   dots <- list(...)
   
   out <- lapply(1:length(dots), function(i) {
@@ -262,27 +276,32 @@ plot_SR_LRP <- function(..., year = FALSE) {
     vout <- rbind(v, v) %>% mutate(Panel = c("SRP", "SRR") %>% rep(each = nrow(v))) %>%
       filter(Panel == "SRR" | Year >= dots[[i]]$RPvars["Yr_Fmed"] %>% as.numeric()) %>%
       mutate(fill = ifelse(Year < dots[[i]]$Assess$Year, "grey", 
-                           ifelse(Year == dots[[i]]$Assess$Year, "black", "white")))
+                           ifelse(Year == dots[[i]]$Assess$Year, "black", "white")),
+             Panel = factor(Panel, levels = c("SRR", "SRP")))
     
-    SRpred <- dots[[i]]$SRpred %>% mutate(Stock = dots[[i]]$RPvars$Stock, Panel = "SRR")
+    SRpred <- dots[[i]]$SRpred %>% 
+      mutate(Stock = dots[[i]]$RPvars$Stock, 
+             Panel = factor("SRR", levels = c("SRR", "SRP")))
     
-    SRPvars <- as.data.frame(dots[[i]]$RPvars) %>% mutate(Panel = "SRP")
+    SRPvars <- as.data.frame(dots[[i]]$RPvars) %>% mutate(Panel = factor("SRP", levels = c("SRR", "SRP")))
     SRPvars$SB_90 <- unique(dots[[i]]$RPts$SB_90)
     
-    SRRvars <- as.data.frame(dots[[i]]$RPvars) %>% mutate(Panel = "SRR")
+    SRRvars <- as.data.frame(dots[[i]]$RPvars) %>% mutate(Panel = factor("SRR", levels = c("SRR", "SRP")))
     
     g <- ggplot(vout, aes(SB, R)) + 
       geom_point(aes(fill = fill), shape = 21) + 
-      #geom_abline(data = SRPvars, aes(intercept = 0, slope = RpS_med)) +  # Median recruits per spawner line
       geom_segment(data = SRPvars,                                        # 90 percentile R/S, and S
                    inherit.aes = FALSE, 
                    x = 0, y = 0, 
-                   linetype = 2,
+                   linetype = 3,
                    aes(xend = SB_90, yend = R_90)) +                      # 90 percentile R/S, and S
       geom_segment(data = SRPvars, 
                    inherit.aes = FALSE, 
-                   x = 0, linetype = 2,
-                   aes(xend = SB_90, y = R_90, yend = R_90)) + 
+                   x = 0, linetype = 3,
+                   aes(xend = SB_90, y = R_90, yend = R_90)) +            # 90 percentile R/S, and S
+      geom_vline(data = SRPvars,
+                 linetype = 2, 
+                 aes(xintercept = SB_90)) + 
       geom_point(data = SRPvars,                                          # 90 percentile R/S, and S
                  inherit.aes = FALSE,    
                  shape = 15, size = 3,
@@ -291,16 +310,17 @@ plot_SR_LRP <- function(..., year = FALSE) {
                    inherit.aes = FALSE, 
                    x = 0, linetype = 3,
                    aes(xend = SBRmax50, y = Rmax50, yend = Rmax50)) + 
-      geom_segment(data = SRRvars,                                        # SSB at 50% Rmax
-                   inherit.aes = FALSE, 
-                   y = 0, linetype = 3,
-                   aes(x = SBRmax50, xend = SBRmax50, yend = Rmax50)) + 
+      geom_vline(data = SRRvars,                                          # SSB at 50% Rmax
+                 linetype = 2,
+                 aes(xintercept = SBRmax50)) + 
       geom_line(data = SRpred) +                                          # Stock-recruit relationship
       geom_point(data = SRRvars, 
                  inherit.aes = FALSE, 
-                 shape = 15, size = 3, #col = "red",
+                 shape = 15, size = 3,
                  aes(x = SBRmax50, y = Rmax50)) + 
-      facet_grid(cols = vars(Stock), rows = vars(Panel), labeller = label_parsed, scales = "free_x") + 
+      facet_grid(cols = vars(Stock), 
+                 rows = vars(Panel), 
+                 labeller = label_parsed) + 
       expand_limits(x = 0, y = 0) + 
       theme_bw() +
       labs(y = "Recruitment") + 
@@ -308,7 +328,13 @@ plot_SR_LRP <- function(..., year = FALSE) {
             strip.placement = "outside") +
       scale_fill_identity()
     
-    if(year) g <- g + ggrepel::geom_text_repel(aes(label = Year))
+    if(year) {
+      g <- g + 
+        ggrepel::geom_text_repel(aes(label = Year), 
+                                 size = size,
+                                 box.padding = box.padding, 
+                                 min.segment.length = min.segment.length)
+    }
     g
   })
   
@@ -330,7 +356,7 @@ plot_SP <- function(..., year = TRUE) {
     g <- ggplot(v, aes(B, value)) + 
       geom_path() + 
       geom_point(aes(fill = fill), shape = 21) +
-      geom_hline(yintercept = 0, linetype = 2) + 
+      geom_hline(yintercept = 0, linetype = 3) + 
       facet_grid(vars(variable), vars(Stock), labeller = label_parsed, scales = "free_y", switch = "y") + 
       expand_limits(x = 0, y = 0) + 
       theme_bw() +
@@ -340,6 +366,12 @@ plot_SP <- function(..., year = TRUE) {
             panel.spacing.y = unit(0, "in")) + 
       labs(x = "Biomass (B)") +
       scale_fill_identity()
+    
+    if(!is.na(dots[[i]]$RPvars$Yr_SP)) {
+      B_SP <- dots[[i]]$SP$B[dots[[i]]$SP$Year == dots[[i]]$RPvars$Yr_SP]
+      g <- g + geom_vline(xintercept = B_SP, linetype = 2)
+    }
+    
     if(year) g <- g + ggrepel::geom_text_repel(aes(label = Year))
     g
   })
@@ -416,22 +448,41 @@ calc_phi0 <- function(M, Wt, Mat, Fec) {
 }
 
 plot_ts <- function(LRP) {
+  
+  var_order <- c("F/F[MSY]", "SPR[eq]", "SPR[dyn]", "SB/SB[MSY]", "SB/SB[0~eq]", "SB/SB[0~dyn]",
+                 "SB/SB[0.5~Rmax]", "SB/SB[low~SP]", "SB/SB[recover]", "SB/SB[0.9~R/S]")
   v <- LRP$RPts %>% group_by(Year) %>%
     mutate(`F/F[MSY]` = FM/FMSY, 
            `SB/SB[MSY]` = SB/SBMSY, `SB/SB[0~eq]` = SB/SB0, `SB/SB[0~dyn]` = SB/SB0dyn,
            `SPR[eq]` = SPR, `SPR[dyn]` = SPRdyn, `SB/SB[recover]` = SB/SB_recover,
+           `SB/SB[0.5~Rmax]` =  SB/SB_Rmax,
+           `SB/SB[0.9~R/S]` = SB/SB_90,
+           `SB/SB[low~SP]` = SB/SB_SP,
            .keep = "none"
     ) %>%
-    left_join(LRP$SP, by = "Year") %>% 
-    mutate(`SP/B` = SP/B) %>%
-    select(!B) %>%
-    reshape2::melt(id.var = "Year")
+    #left_join(LRP$SP, by = "Year") %>% 
+    #mutate(`SP/B` = SP/B) %>%
+    #select(!B) %>%
+    reshape2::melt(id.var = "Year") %>%
+    mutate(variable = factor(variable, levels = var_order)) %>%
+    filter(!is.na(value))
+  
+  ref_vars <- var_order[var_order %in% unique(v$variable)]
+  ref_vars <- factor(ref_vars, levels = ref_vars)
+  
+  ref <- data.frame(variable = ref_vars) %>% 
+    mutate(name = paste0("(", letters[1:nrow(.)], ")"))
   
   g <- ggplot(v, aes(Year, value)) + 
     geom_path() + 
-    #geom_point() +
+    geom_text(data = ref, aes(label = name), x = -Inf, y = Inf, hjust = "inward", vjust = "inward") + 
     geom_vline(xintercept = LRP$Assess$Year, linetype = 2) + 
-    facet_wrap(vars(variable), labeller = label_parsed, scales = "free_y", strip.position = "left") + 
+    facet_wrap(vars(variable), 
+               labeller = label_parsed, 
+               ncol = 3,
+               nrow = 4,
+               scales = "free_y", 
+               strip.position = "left") + 
     expand_limits(y = 0) + 
     theme_bw() +
     theme(strip.background = element_rect(fill = NA, colour = NA), 
@@ -443,3 +494,52 @@ plot_ts <- function(LRP) {
   g
 }
 
+#plot_summary_ts <- function(LRP, vars = "FMSY") {
+#  vars_all <- data.frame(vars = c("FMSY", "SPR", "SPRdyn", "SBMSY", "SB0", "SB0dyn", "SB_recover", "SB_Rmax", "SB_90", "SB_SP"),
+#                         vtitle = c("F/F[MSY]", "SPR[eq]", "SPR[dyn]", "SB/SB[MSY]", "SB/SB[0~eq]", "SB/SB[0~dyn]", 
+#                                    "SB/SB[recover]", "SB/SB[0.5~Rmax]", "SB/SB[0.9~R/S]", "SB/SB[low~SP]"),
+#                         type = c("FM", "SPR", "SPR", "SB", "SB", "SB", "SB", "SB", "SB", "SB"))
+#  
+#  df <- lapply(vars, function(x) {
+#    ind <- match(x, vars_all$vars)
+#    
+#    if(vars_all$type[ind] == "SPR") {
+#      data.frame(Year = LRP$RPts$Year, 
+#                 value = LRP$RPts[, vars_all$vars[ind]],
+#                 vars = x, 
+#                 type = vars_all$type[ind], 
+#                 name = vars_all$vtitle[ind])
+#    } else {
+#      data.frame(Year = LRP$RPts$Year, 
+#                 value = LRP$RPts[, vars_all$type[ind]] / LRP$RPts[, x],
+#                 vars = x, 
+#                 type = vars_all$type[ind], 
+#                 name = vars_all$vtitle[ind])
+#    }
+#  }) %>% bind_rows()
+#  
+#  g <- ggplot(df, aes(Year, value)) + 
+#    geom_line(aes(linetype = name)) + 
+#    theme_bw() + 
+#    expand_limits(y = 0)
+#  
+#  browser()
+#  
+#  if("SPR" %in% vars) {
+#    g <- g + 
+#      labs(y = "SPR") +
+#      scale_linetype_manual(name = "SPR", values = c("SPR[eq]" = 1, "SPR[dyn]" = 2),
+#                            labels = c("SPR[eq]" = "Equilibrium", "SPR[dyn]" = "Dynamic"))
+#  } else { # SB
+#    g <- g + 
+#      labs(y = "Biomass LRP ratio") +
+#      scale_linetype_manual(name = "LRP", values = label_value, 
+#                            labels = label_parsed)
+#  }
+#  g
+#}
+#
+#plot_summary_ts(LRP, c("SPR", "SPRdyn"))
+#
+#
+#plot_summary_ts(LRP, c("SBMSY", "SB0"))

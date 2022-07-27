@@ -1,17 +1,23 @@
 
-SH <- readxl::read_excel('Report/Seriousharm_estimates_import.xlsx') %>% select(!`F/F[rep]`) %>%
-  filter(Stock != "US Pacific ocean perch" & Stock != "GM haddock")
+SH <- readxl::read_excel('Report/Seriousharm_estimates_import.xlsx', sheet = "Seriousharm_estimates") %>% 
+  select(!`F/F[rep]` & !`B/B[SRP]`) %>%
+  filter(Stock != "US Pacific ocean perch", Stock != "GM haddock")
 
 SH <- SH[order(SH$`B[ESH]/B[init]`), ] %>% 
   #mutate(St = paste0("(", 1:nrow(SH), ")")) %>% 
   mutate(St = 1:nrow(SH)) 
 
 SH_order <- SH %>% 
-  reshape2::melt(id.vars = c("Stock", "St", "Year_assess", "B[ESH]/B[init]", "tv")) %>%
-  mutate(value = ifelse(value > 5, 5, value)) %>%
+  reshape2::melt(id.vars = c("Stock", "St", "Year_ESH", "B[ESH]/B[init]", "tv")) %>%
+  mutate(value_out = ifelse(value > 3, 3, value),
+         St = ifelse(value > 3, paste0(St, "*"), St)) %>%
   filter(!is.na(value))
 
-g <- ggplot(SH_order, aes(`B[ESH]/B[init]`, value)) + 
+var_lev <- unique(SH_order$variable)
+levels(SH_order$variable) <- var_lev[c(1:6, 9, 8, 7, 10)]
+
+
+g <- ggplot(SH_order, aes(`B[ESH]/B[init]`, value_out)) + 
   #geom_smooth() + 
   geom_text(aes(label = St), size = 3) + 
   #geom_point() +
@@ -21,13 +27,17 @@ g <- ggplot(SH_order, aes(`B[ESH]/B[init]`, value)) +
         strip.background = element_rect(fill = NA, colour = NA), 
         axis.title.y = element_blank(),
         strip.placement = "outside") + 
-  facet_wrap(vars(variable), scales = "free_y", labeller = label_parsed, strip.position = "left") +
+  facet_wrap(vars(variable), 
+             scales = "free_y", 
+             labeller = label_parsed, 
+             ncol = 3,
+             strip.position = "left") +
   coord_cartesian(xlim = c(0.01, 1)) +
   expand_limits(y = 0) + 
   labs(x = expression(B[ESH]/B[init]))
-ggsave("Figures/meta/Binit.png", g, height = 5, width = 7)
+ggsave("Figures/meta/Binit.png", g, height = 5, width = 6)
 
-g <- ggplot(SH_order, aes(`B[ESH]/B[init]`, value)) + 
+g <- ggplot(SH_order, aes(`B[ESH]/B[init]`, value_out)) + 
   geom_smooth() + 
   geom_text(aes(label = St), size = 3) + 
   #geom_point() +
@@ -38,11 +48,15 @@ g <- ggplot(SH_order, aes(`B[ESH]/B[init]`, value)) +
         strip.background = element_rect(fill = NA, colour = NA), 
         axis.title.y = element_blank(),
         strip.placement = "outside") + 
-  facet_wrap(vars(variable), scales = "free_y", labeller = label_parsed, strip.position = "left") +
+  facet_wrap(vars(variable), 
+             scales = "free_y", 
+             labeller = label_parsed, 
+             ncol = 3,
+             strip.position = "left") +
   coord_cartesian(xlim = c(0.01, 1)) +
   expand_limits(y = 0) + 
   labs(x = expression(B[ESH]/B[init]))
-ggsave("Figures/meta/Binit_smooth.png", g, height = 5, width = 7)
+ggsave("Figures/meta/Binit_smooth.png", g, height = 5, width = 6)
 
 
 SH_order_cor <- SH_order %>% group_by(variable) %>%
@@ -52,7 +66,7 @@ SH_order_cor <- SH_order %>% group_by(variable) %>%
   mutate(label = corr)
 
 
-g <- ggplot(SH_order, aes(`B[ESH]/B[init]`, value)) + 
+g <- ggplot(SH_order, aes(`B[ESH]/B[init]`, value_out)) + 
   #geom_smooth() + 
   geom_text(aes(label = St, colour = as.factor(tv)), size = 3) + 
   geom_label(data = SH_order_cor, 
@@ -69,11 +83,12 @@ g <- ggplot(SH_order, aes(`B[ESH]/B[init]`, value)) +
   facet_wrap(vars(variable), 
              scales = "free_y", 
              labeller = label_parsed,
+             ncol = 3,
              strip.position = "left") +
   expand_limits(x = 0, y = 0) + 
   labs(x = expression(B[ESH]/B[init])) +
   scale_colour_manual(values = c("0" = "black", "1" = "red"))
-ggsave("Figures/meta/Binit_tv.png", g, height = 5, width = 7)
+ggsave("Figures/meta/Binit_tv.png", g, height = 5, width = 6)
 
 
 
@@ -81,23 +96,29 @@ ggsave("Figures/meta/Binit_tv.png", g, height = 5, width = 7)
 
 
 
-SH_pairs <- reshape2::acast(SH_order, list("St", "variable"))
-
+SH_pairs <- SH %>% 
+  reshape2::melt(id.vars = c("Stock", "St", "Year_ESH", "B[ESH]/B[init]", "tv")) %>%
+  mutate(value_out = ifelse(value > 3, 3, value),
+         variable = factor(variable, levels = var_lev[c(1:6, 9, 8, 7, 10)])) %>%
+  reshape2::acast(list("St", "variable"), value.var = "value_out")
+  
 panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...) {
   usr <- par("usr"); on.exit(par(usr))
   par(usr = c(0, 1, 0, 1))
   val <- cor(x, y, use = "complete.obs")
   r <- abs(val)
-  txt <- format(c(val, 0.123456789), digits = digits)[1]
+  txt <- format(c(val, 0.123456789) %>% round(2), digits = digits)[1]
   txt <- paste0(prefix, txt)
   #if(missing(cex.cor)) cex.cor <- 0.8/strwidth(txt)
   #text(0.5, 0.5, txt, cex = cex.cor * r)
-  text(0.5, 0.5, txt, cex = 2)
+  text(0.5, 0.5, txt, cex = 1.5)
 }
 
+
 text2 <- function(x, y, ...) {
-  text(x, y, labels = rownames(SH_pairs), col = ifelse(SH$tv, "red", "black"),
-       xlim = c(0, 1.1 * max(x)), ylim = c(0, 1.1 * max(y)))
+  text(x, y, 
+       labels = rownames(SH_pairs), 
+       col = ifelse(SH$tv, "red", "black"))
   if(cor(x, y, use = "complete.obs") > 0) abline(a = 0, b = 1, lty = 3)
 }
 

@@ -12,9 +12,9 @@ SW <- get_ref_pt(Hist, OM,
                  Year_assess = 1999,
                  Name = "N.A.~Swordfish",
                  Yr_SRP = 2002,  # Year corresponding to ICES Blim (Type 5, no B_SR)
-                 Yr_Fmed = 1979, # First year for calculating median R/S
+                 Yr_Fmed = 1979, # First year for calculating median R/S,
+                 Yr_Brecover = NA
 )
-#SW$RPts$SB_recover <- SW$Assess$SB_recover <- NA
 saveRDS(SW, file = "LRP/LRP_ICCAT_SWO.rds")
 SW <- readRDS(file = "LRP/LRP_ICCAT_SWO.rds")
 
@@ -33,7 +33,8 @@ RS <- get_ref_pt(Hist, OM,
                  Year_assess = 1990, # 1990 Gulf FMP Amendment 1, 1991 Amendment 3
                  Name = "GoM~Red~Snapper",
                  Yr_SRP = "hockey_stick",  # Year corresponding to ICES Blim (Type 4, no B_SR)
-                 Yr_Fmed = 1972 # First year for calculating median R/S
+                 Yr_Fmed = 1972, # First year for calculating median R/S
+                 Yr_Brecover = NA
 )
 
 saveRDS(RS, file = "LRP/LRP_GoM_RS.rds")
@@ -48,6 +49,7 @@ plot_SP(RS)
 
 # NE Acadian redfish
 OM <- readRDS(file = "OM/OM_NE_redfish.rds")
+OM@cpars$Wt_age_C <- NULL
 Hist <- SubCpars(OM, 1:2) %>% runMSE(Hist = TRUE)
 
 AR <- get_ref_pt(Hist, OM, 
@@ -55,7 +57,8 @@ AR <- get_ref_pt(Hist, OM,
                  Name = "N.E.~Acadian~redfish",
                  Yr_SRP = 1971,  # Year corresponding to ICES Blim
                  Yr_Fmed = 1960,  # First year for calculating median R/S
-                 Yr_SP = 1974
+                 Yr_SP = 1974,
+                 Yr_Brecover = NA
 )
 
 
@@ -101,11 +104,8 @@ SNEYT <- get_ref_pt(Hist, OM,
                     Yr_SRP = 1987,  # Year corresponding to ICES Blim
                     Yr_SP = 1987,
                     #Yr_Fmed = 1980  # First year for calculating median R/S
+                    Yr_Brecover = 1987
 )
-# B recover is SSB in 1987
-SNEYT$RPvars$Yr_Brecover <- 1987
-SNEYT$RPts$SB_recover <- SNEYT$RPts$SB[SNEYT$RPts$Year == 1987]
-SNEYT$Assess$SB_recover <- SNEYT$RPts$SB[SNEYT$RPts$Year == 2005]/SNEYT$RPts$SB[SNEYT$RPts$Year == 1987]
 
 saveRDS(SNEYT, file = "LRP/LRP_sne_yt.rds")
 
@@ -127,8 +127,8 @@ RP <- get_ref_pt(Hist, OM,
                  Name = "S.A.~Red~Porgy",
                  Yr_SRP = "hockey_stick",  # Year corresponding to ICES Blim
                  #Yr_Fmed = 1990 # First year for calculating median R/S
+                 Yr_Brecover = NA
 )
-RP$Assess$SB_recover <- RP$RPts$SB_recover <- RP$RPvars$Yr_Brecover <- NA
 
 saveRDS(RP, file = "LRP/LRP_SA_RedPorgy.rds")
 RP <- readRDS(file = "LRP/LRP_SA_RedPorgy.rds")
@@ -150,11 +150,9 @@ gag <- get_ref_pt(Hist, OM,
                   Name = "S.A.~Gag~Grouper",
                   Yr_SRP = "hockey_stick",  # Year corresponding to ICES Blim
                   Yr_Fmed = 1976, # First year for calculating median R/S
-                  Yr_SP = 2006
+                  Yr_SP = 2006,
+                  Yr_Brecover = 1988
 )
-gag$RPvars$Yr_Brecover <- 1988
-gag$RPts$SB_recover <- gag$RPts$SB[gag$RPts$Year == 1988]
-gag$Assess$SB_recover <- gag$RPts$SB[gag$RPts$Year == OM@CurrentYr]/gag$RPts$SB[gag$RPts$Year == 1987]
 
 saveRDS(gag, file = "LRP/LRP_SA_gag.rds")
 gag <- readRDS(file = "LRP/LRP_SA_gag.rds")
@@ -177,10 +175,11 @@ Hist <- SubCpars(OM, 1:2) %>% runMSE(Hist = TRUE)
 CC <- get_ref_pt(Hist, OM, 
                   Year_assess = 2000, # Amendment 4 (see SEDAR 60 report)
                   Name = "S.C.B.~Cowcod",
-                  Yr_SRP = NA #,  # Year corresponding to ICES Blim
+                  Yr_SRP = NA, # Year corresponding to ICES Blim
                   #Yr_Fmed = 1983 # First year for calculating median R/S
+                  Yr_Brecover = 1934
 )
-CC$Assess$SB_SRP <- CC$RPts$SB_SRP <- NA
+
 saveRDS(CC, file = "LRP/LRP_SCB_cowcod.rds")
 CC <- readRDS(file = "LRP/LRP_SCB_cowcod.rds")
 
@@ -201,9 +200,10 @@ HOM <- get_ref_pt(Hist, OM,
                   Year_assess = 2020, #?
                   Name = "N.E.A.~Horse~Mackerel",
                   Yr_SRP = 2017,  # Year corresponding to ICES Blim
-                  Yr_Fmed = 1982 # First year for calculating median R/S
+                  Yr_Fmed = 1982, # First year for calculating median R/S
+                  Yr_Brecover = 1982
 )
-HOM$Assess$SB_recover <- HOM$RPts$SB_recover <- HOM$RPvars$Yr_Brecover <- NA
+
 saveRDS(HOM, file = "LRP/LRP_NEA_hom.rds")
 HOM <- readRDS(file = "LRP/LRP_NEA_hom.rds")
 
@@ -231,9 +231,10 @@ DB <- get_ref_pt(Hist, OM,
                  Year_assess = 2003, # Declared overfished
                  Name = "U.S.~Darkblotched~rockfish",
                  Yr_SRP = 2010,  # Year corresponding to ICES Blim
-                 Yr_Fmed = 1970 # First year for calculating median R/S
+                 Yr_Fmed = 1970, # First year for calculating median R/S
+                 Yr_Brecover = NA
 )
-DB$Assess$SB_recover <- DB$RPts$SB_recover <- DB$RPvars$Yr_Brecover <- NA
+
 
 saveRDS(DB, file = "LRP/LRP_WC_darkblotched.rds")
 DB <- readRDS(file = "LRP/LRP_WC_darkblotched.rds")
@@ -248,32 +249,32 @@ plot_SR_LRP(DB)
 plot_SP(DB)
 
 # US POP
-OM <- readRDS(file = "OM/OM_WC_pop.rds")
-Hist <- SubCpars(OM, 1:2) %>% runMSE(Hist = TRUE)
-
-POP <- get_ref_pt(Hist, OM, 
-                  Year_assess = 2001, # Declared overfished
-                  Name = "U.S.~Pacific~ocean~perch",
-                  Yr_SRP = 1987,  # Year corresponding to ICES Blim
-                  Yr_Fmed = 1965 # First year for calculating median R/S
-)
-
-saveRDS(POP, file = "LRP/LRP_WC_pop.rds")
-POP <- readRDS(file = "LRP/LRP_WC_pop.rds")
-
-local({
-  POP$RPts <- filter(POP$RPts, Year != 2008)
-  plot_SR_LRP(POP)
-})
-
-plot_F(POP)
-plot_B(POP)
-plot_SR(POP)
-plot_Hist(POP)
-
-plot_SR_LRP(POP)
-plot_SP(POP)
-
+#OM <- readRDS(file = "OM/OM_WC_pop.rds")
+#Hist <- SubCpars(OM, 1:2) %>% runMSE(Hist = TRUE)
+#
+#POP <- get_ref_pt(Hist, OM, 
+#                  Year_assess = 2001, # Declared overfished
+#                  Name = "U.S.~Pacific~ocean~perch",
+#                  Yr_SRP = 1987,  # Year corresponding to ICES Blim
+#                  Yr_Fmed = 1965 # First year for calculating median R/S
+#)
+#
+#saveRDS(POP, file = "LRP/LRP_WC_pop.rds")
+#POP <- readRDS(file = "LRP/LRP_WC_pop.rds")
+#
+#local({
+#  POP$RPts <- filter(POP$RPts, Year != 2008)
+#  plot_SR_LRP(POP)
+#})
+#
+#plot_F(POP)
+#plot_B(POP)
+#plot_SR(POP)
+#plot_Hist(POP)
+#
+#plot_SR_LRP(POP)
+#plot_SP(POP)
+#
 
 # sGSL cod
 OM <- readRDS(file = "OM/OM_sGSL_cod.rds")
@@ -284,7 +285,8 @@ GSLC <- get_ref_pt(Hist, OM,
                    Name = "s.GSL~Atl.~Cod",
                    Yr_SRP = "hockey_stick",  # Year corresponding to ICES Blim
                    Yr_Fmed = 1971, # First year for calculating median R/S,
-                   Yr_SP = 1992
+                   Yr_SP = 1992,
+                   Yr_Brecover = 1975
 )
 
 #GSLC$RPts$FMSY <- GSLC$RPts$SB0 <- GSLC$RPts$
@@ -354,6 +356,7 @@ GSLH <- get_ref_pt(Hist, OM,
                    Name = "s.GSL~Atl.~Herring",
                    Yr_SRP = NA,  # Year corresponding to ICES Blim
                    #Yr_Fmed = 1983 # First year for calculating median R/S
+                   Yr_Brecover = 1981
 )
 
 
@@ -427,13 +430,9 @@ PL <- get_ref_pt(Hist, OM,
                  Name = "NAFO~American~plaice",
                  Yr_SRP = "hockey_stick",  # Year corresponding to ICES Blim
                  #Yr_Fmed = 1960, # First year for calculating median R/S
-                 Yr_SP = 1993
+                 Yr_SP = 1993,
+                 Yr_Brecover = 1976
 )
-
-
-PL$RPts$SB_recover <- PL$RPts$SB[17]
-PL$Assess$SB_recover <- PL$RPts$SB[35]/ PL$RPts$SB[17]
-PL$RPvars$Yr_Brecover <- 1976
 
 saveRDS(PL, file = "LRP/LRP_NAFO_plaice.rds")
 PL <- readRDS(file = "LRP/LRP_NAFO_plaice.rds")
@@ -460,11 +459,11 @@ NAFOcod <- get_ref_pt(Hist, OM,
                       Name = "NAFO~Atlantic~cod",
                       Yr_SRP = "hockey_stick",  # Year corresponding to ICES Blim
                       #Yr_Fmed = 1960, # First year for calculating median R/S
-                      Yr_SP = 1991
+                      Yr_SP = 1991,
+                      Yr_Brecover = 1976
 )
-NAFOcod$RPts$SB_recover <- NAFOcod$RPts$SB[18]
-NAFOcod$Assess$SB_recover <- NAFOcod$RPts$SB[36]/ NAFOcod$RPts$SB[18]
-NAFOcod$RPvars$Yr_Brecover <- 1976
+
+
 
 saveRDS(NAFOcod, file = "LRP/LRP_NAFO_cod.rds")
 NAFOcod <- readRDS(file = "LRP/LRP_NAFO_cod.rds")
@@ -491,11 +490,9 @@ GoM_cod <- get_ref_pt(Hist, OM,
                       Name = "G.M.~Atlantic~cod",
                       Yr_SRP = "hockey_stick",  # Year corresponding to ICES Blim
                       #Yr_Fmed = 1960, # First year for calculating median R/S
-                      Yr_SP = 2011
+                      Yr_SP = 2011,
+                      Yr_Brecover = 1994
 )
-GoM_cod$RPts$SB_recover <- GoM_cod$RPts$SB[13]
-GoM_cod$Assess$SB_recover <- GoM_cod$RPts$SB[24]/ GoM_cod$RPts$SB[13]
-GoM_cod$RPvars$Yr_Brecover <- 1994
 
 saveRDS(GoM_cod, file = "LRP/LRP_GoM_cod.rds")
 GoM_cod <- readRDS(file = "LRP/LRP_GoM_cod.rds")
@@ -518,9 +515,10 @@ BET <- get_ref_pt(Hist, OM,
                   Year_assess = 2018, # ICCAT resolutions and lobbying
                   Name = "Atlantic~bigeye~tuna",
                   Yr_SRP = 2011,  # Year corresponding to ICES Blim
-                  Yr_Fmed = 1973 # First year for calculating median R/S
+                  Yr_Fmed = 1973, # First year for calculating median R/S
+                  Yr_Brecover = NA
 )
-BET$Assess$SB_SRP <- BET$RPts$SB_SRP <- NA
+
 
 saveRDS(BET, file = "LRP/LRP_ICCAT_BET.rds")
 BET <- readRDS(file = "LRP/LRP_ICCAT_BET.rds")
@@ -544,7 +542,8 @@ WCVI <- get_ref_pt(Hist, OM,
                    Name = "WCVI~Pacific~herring",
                    Yr_SRP = "hockey_stick",  # Year corresponding to ICES Blim
                    Yr_Fmed = 1951, # First year for calculating median R/S
-                   Yr_SP = 2005
+                   Yr_SP = 2005,
+                   Yr_Brecover = 1968
 )
 
 saveRDS(WCVI, file = "LRP/LRP_WCVI_herring.rds")
@@ -566,14 +565,11 @@ EBScod <- get_ref_pt(Hist, OM,
                      Name = "E.B.S.~Atlantic~cod",
                      Yr_SRP = 2012,  # Year corresponding to ICES Blim
                      Yr_Fmed = 1946, # First year for calculating median R/S
-                     Yr_SP = 2012
+                     Yr_SP = 2012,
+                     Yr_Brecover = 1960
 )
-EBScod$RPts$SB_recover <- EBScod$RPts$SB[15]
-EBScod$Assess$SB_recover <- EBScod$RPts$SB[74]/ EBScod$RPts$SB[15]
-EBScod$RPvars$Yr_Brecover <- 1960
-
-
 saveRDS(EBScod, file = "LRP/LRP_EBS_cod.rds")
+
 plot_F(EBScod)
 plot_B(EBScod)
 plot_SR(EBScod)
