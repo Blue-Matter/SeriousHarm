@@ -352,11 +352,12 @@ Hist@Ref$ByYear$SSBMSY[1, 1:OM@nyears] <- rp[2, ]
 Hist@Ref$ByYear$SSB0[1, 1:OM@nyears] <- rp[3, ]
 
 GSLH <- get_ref_pt(Hist, OM, 
-                   Year_assess = 2018, #?
+                   Year_assess = 2002, #identified to be below LRP
                    Name = "s.GSL~Atl.~Herring",
                    Yr_SRP = NA,  # Year corresponding to ICES Blim
                    #Yr_Fmed = 1983 # First year for calculating median R/S
-                   Yr_Brecover = 1981
+                   Yr_Brecover = 1981,
+                   Yr_SP = 1980
 )
 
 
