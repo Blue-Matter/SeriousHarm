@@ -193,7 +193,7 @@ plot_B <- function(...) {
             axis.title.y = element_blank(),
             panel.spacing = unit(0, "in"),
             strip.placement = "outside")
-    #if(i > 1) g <- g + theme(strip.text.y = element_blank())
+    
     g
   })
   
@@ -202,180 +202,221 @@ plot_B <- function(...) {
 
 
 
-
+gghist <- function(x, title = TRUE, letter.legend) {
+  v <- x$RPts %>% 
+    select(Year, SB, R, FM, M, Stock) %>% 
+    rename(Recruitment = R, F = FM) %>%
+    reshape2::melt(id.vars = c("Year", "Stock")) %>%
+    mutate(Mort = ifelse(variable == "M", "M", "F"), 
+           variable = as.character(variable))
+  v$variable[v$variable == "M" | v$variable == "F"] <- "Mortality~rate"
+  v$variable <- factor(v$variable, levels = c("SB", "Mortality~rate", "Recruitment"))
+  if(!title) v$Stock <- ""
+  
+  g <- ggplot(v, aes(Year, value)) + 
+    geom_line(aes(linetype = Mort)) + 
+    facet_grid(rows = vars(variable), 
+               cols = vars(Stock), 
+               labeller = label_parsed, 
+               scales = "free", 
+               switch = "y") + 
+    expand_limits(y = 0) + 
+    geom_vline(xintercept = x$Assess$Year, linetype = 2) + 
+    theme_bw() +
+    theme(strip.background = element_rect(fill = NA, colour = NA), 
+          axis.title.y = element_blank(),
+          panel.spacing = unit(0, "in"),
+          strip.placement = "outside") +
+    labs(linetype = "Mortality\nrate")
+  
+  if(!missing(letter.legend)) {
+    lett <- data.frame(variable = factor(levels(v$variable), levels = levels(v$variable)),
+                       Stock = v$Stock %>% unique(),
+                       txt = letter.legend)
+    
+    g <- g + geom_text(data = lett, aes(label = txt), x = Inf, y = Inf, hjust = "inward", vjust = "inward")
+  }
+  g
+}
 
 plot_Hist <- function(...) {
   dots <- list(...)
-  
-  out <- lapply(1:length(dots), function(i) {
-    v <- dots[[i]]$RPts %>% 
-      select(Year, SB, R, FM, M, Stock) %>% 
-      rename(Recruitment = R, F = FM) %>%
-      reshape2::melt(id.vars = c("Year", "Stock")) %>%
-      mutate(Mort = ifelse(variable == "M", "M", "F"), 
-             variable = as.character(variable))
-    v$variable[v$variable == "M" | v$variable == "F"] <- "Mortality~rate"
-    
-    ggplot(v, aes(Year, value)) + 
-      geom_line(aes(linetype = Mort)) + 
-      facet_grid(rows = vars(variable), 
-                 cols = vars(Stock), 
-                 labeller = label_parsed, 
-                 scales = "free", 
-                 switch = "y") + 
-      expand_limits(y = 0) + 
-      geom_vline(xintercept = dots[[i]]$Assess$Year, linetype = 2) + 
-      theme_bw() +
-      theme(strip.background = element_rect(fill = NA, colour = NA), 
-            axis.title.y = element_blank(),
-            panel.spacing = unit(0, "in"),
-            strip.placement = "outside") +
-      labs(linetype = "Mortality\nrate")
-  })
-  
+  out <- lapply(dots, gghist)
   cowplot::plot_grid(plotlist = out)
 }
 
+ggSR <- function(x, year = TRUE, title = TRUE) {
+  v <- x$RPts %>% select(Year, SB, R, Stock) 
+  if(!title) v$Stock <- ""
+  
+  g <- ggplot(v, aes(SB, R)) + 
+    geom_point(shape = 21, fill = "grey") + 
+    facet_grid(cols = vars(Stock), labeller = label_parsed, scales = "free", switch = "y") + 
+    expand_limits(x = 0, y = 0) + 
+    theme_bw() +
+    labs(y = "Recruitment") + 
+    theme(strip.background = element_rect(fill = NA, colour = NA), 
+          strip.placement = "outside",
+          panel.spacing.y = unit(0, "in"))
+  
+  if(year) {
+    g <- g + ggrepel::geom_text_repel(aes(label = Year))
+  }
+  g
+}
 
 plot_SR <- function(..., year = TRUE) {
   dots <- list(...)
-  
-  out <- lapply(1:length(dots), function(i) {
-    v <- dots[[i]]$RPts %>% 
-      select(Year, SB, R, Stock) 
-    
-    g <- ggplot(v, aes(SB, R)) + 
-      geom_point(shape = 21, fill = "grey") + 
-      facet_grid(cols = vars(Stock), labeller = label_parsed, scales = "free", switch = "y") + 
-      expand_limits(x = 0, y = 0) + 
-      theme_bw() +
-      labs(y = "Recruitment") + 
-      theme(strip.background = element_rect(fill = NA, colour = NA), 
-            strip.placement = "outside",
-            panel.spacing.y = unit(0, "in"))
-    
-    if(year) {
-      g <- g + ggrepel::geom_text_repel(aes(label = Year))
-    }
-    g
-  })
-  
+  out <- lapply(dots, ggSR, year = year)
   cowplot::plot_grid(plotlist = out)
 }
 
+ggSR_LRP <- function(x, year = FALSE, 
+                     title = TRUE, 
+                     panel_labs = c("SRR", "SRP"),
+                     size = 2, box.padding = 0.1, min.segment.length = 0.3,
+                     letter.legend) {
+  v <- x$RPts %>% select(Year, SB, R, Stock) 
+  
+  vout <- rbind(v, v) %>% mutate(Panel = panel_labs %>% rep(each = nrow(v))) %>%
+    filter(Year >= as.numeric(x$RPvars["Yr_Fmed"])) %>%
+    #filter(Panel == panel_labs[1] | Year >= x$RPvars["Yr_Fmed"] %>% as.numeric()) %>%
+    mutate(fill = ifelse(Year < x$Assess$Year, "grey", 
+                         ifelse(Year == x$Assess$Year, "black", "white")),
+           Panel = factor(Panel, levels = panel_labs))
+  
+  SRpred <- x$SRpred %>% 
+    mutate(Stock = x$RPvars$Stock, 
+           Panel = factor(panel_labs[1], levels = panel_labs)) %>%
+    filter(SB <= max(vout$SB))
+  
+  SRPvars <- as.data.frame(x$RPvars) %>% mutate(Panel = factor(panel_labs[2], levels = panel_labs))
+  SRPvars$SB_90 <- unique(x$RPts$SB_90)
+  
+  SRRvars <- as.data.frame(x$RPvars) %>% mutate(Panel = factor(panel_labs[1], levels = panel_labs))
+  
+  if(!title) vout$Stock <- SRpred$Stock <- SRPvars$Stock <- SRRvars$Stock <- ""
+  
+  g <- ggplot(vout, aes(SB, R)) + 
+    geom_point(aes(fill = fill), shape = 21) + 
+    geom_segment(data = SRPvars,                                        # 90 percentile R/S, and S
+                 inherit.aes = FALSE, 
+                 x = 0, y = 0, 
+                 linetype = 3,
+                 aes(xend = SB_90, yend = R_90)) +                      # 90 percentile R/S, and S
+    geom_segment(data = SRPvars, 
+                 inherit.aes = FALSE, 
+                 x = 0, linetype = 3,
+                 aes(xend = SB_90, y = R_90, yend = R_90)) +            # 90 percentile R/S, and S
+    geom_vline(data = SRPvars,
+               linetype = 2, 
+               aes(xintercept = SB_90)) + 
+    geom_point(data = SRPvars,                                          # 90 percentile R/S, and S
+               inherit.aes = FALSE,    
+               shape = 15, size = 3,
+               aes(x = SB_90, y = R_90)) + 
+    geom_segment(data = SRRvars,                                        # SSB at 50% Rmax
+                 inherit.aes = FALSE, 
+                 x = 0, linetype = 3,
+                 aes(xend = SBRmax50, y = Rmax50, yend = Rmax50)) + 
+    geom_vline(data = SRRvars,                                          # SSB at 50% Rmax
+               linetype = 2,
+               aes(xintercept = SBRmax50)) + 
+    geom_line(data = SRpred) +                                          # Stock-recruit relationship
+    geom_point(data = SRRvars, 
+               inherit.aes = FALSE, 
+               shape = 15, size = 3,
+               aes(x = SBRmax50, y = Rmax50)) + 
+    facet_grid(cols = vars(Stock), 
+               rows = vars(Panel), 
+               labeller = label_parsed) + 
+    expand_limits(x = 0) + 
+    #coord_cartesian(ylim = c(0, 1.1 * max(vout$R))) +
+    theme_bw() +
+    labs(y = "Recruitment") + 
+    theme(panel.spacing = unit(0, "in"),
+          strip.background = element_rect(fill = NA, colour = NA), 
+          strip.placement = "outside") +
+    scale_fill_identity()
+  
+  if(!missing(letter.legend)) {
+    lett <- data.frame(Panel = factor(panel_labs, levels = panel_labs),
+                       Stock = vout$Stock %>% unique(),
+                       txt = letter.legend)
+    
+    g <- g + geom_text(data = lett, aes(label = txt), x = Inf, y = Inf, hjust = "inward", vjust = "inward")
+  }
+  
+  
+  if(year) {
+    g <- g + 
+      ggrepel::geom_text_repel(aes(label = Year), 
+                               size = size,
+                               box.padding = box.padding, 
+                               min.segment.length = min.segment.length)
+  }
+  g
+}
 
 
 plot_SR_LRP <- function(..., year = FALSE, size = 2, box.padding = 0.1, min.segment.length = 0.3) {
   dots <- list(...)
   
-  out <- lapply(1:length(dots), function(i) {
-    
-    v <- dots[[i]]$RPts %>% 
-      select(Year, SB, R, Stock) 
-    
-    vout <- rbind(v, v) %>% mutate(Panel = c("SRP", "SRR") %>% rep(each = nrow(v))) %>%
-      filter(Panel == "SRR" | Year >= dots[[i]]$RPvars["Yr_Fmed"] %>% as.numeric()) %>%
-      mutate(fill = ifelse(Year < dots[[i]]$Assess$Year, "grey", 
-                           ifelse(Year == dots[[i]]$Assess$Year, "black", "white")),
-             Panel = factor(Panel, levels = c("SRR", "SRP")))
-    
-    SRpred <- dots[[i]]$SRpred %>% 
-      mutate(Stock = dots[[i]]$RPvars$Stock, 
-             Panel = factor("SRR", levels = c("SRR", "SRP")))
-    
-    SRPvars <- as.data.frame(dots[[i]]$RPvars) %>% mutate(Panel = factor("SRP", levels = c("SRR", "SRP")))
-    SRPvars$SB_90 <- unique(dots[[i]]$RPts$SB_90)
-    
-    SRRvars <- as.data.frame(dots[[i]]$RPvars) %>% mutate(Panel = factor("SRR", levels = c("SRR", "SRP")))
-    
-    g <- ggplot(vout, aes(SB, R)) + 
-      geom_point(aes(fill = fill), shape = 21) + 
-      geom_segment(data = SRPvars,                                        # 90 percentile R/S, and S
-                   inherit.aes = FALSE, 
-                   x = 0, y = 0, 
-                   linetype = 3,
-                   aes(xend = SB_90, yend = R_90)) +                      # 90 percentile R/S, and S
-      geom_segment(data = SRPvars, 
-                   inherit.aes = FALSE, 
-                   x = 0, linetype = 3,
-                   aes(xend = SB_90, y = R_90, yend = R_90)) +            # 90 percentile R/S, and S
-      geom_vline(data = SRPvars,
-                 linetype = 2, 
-                 aes(xintercept = SB_90)) + 
-      geom_point(data = SRPvars,                                          # 90 percentile R/S, and S
-                 inherit.aes = FALSE,    
-                 shape = 15, size = 3,
-                 aes(x = SB_90, y = R_90)) + 
-      geom_segment(data = SRRvars,                                        # SSB at 50% Rmax
-                   inherit.aes = FALSE, 
-                   x = 0, linetype = 3,
-                   aes(xend = SBRmax50, y = Rmax50, yend = Rmax50)) + 
-      geom_vline(data = SRRvars,                                          # SSB at 50% Rmax
-                 linetype = 2,
-                 aes(xintercept = SBRmax50)) + 
-      geom_line(data = SRpred) +                                          # Stock-recruit relationship
-      geom_point(data = SRRvars, 
-                 inherit.aes = FALSE, 
-                 shape = 15, size = 3,
-                 aes(x = SBRmax50, y = Rmax50)) + 
-      facet_grid(cols = vars(Stock), 
-                 rows = vars(Panel), 
-                 labeller = label_parsed) + 
-      expand_limits(x = 0, y = 0) + 
-      theme_bw() +
-      labs(y = "Recruitment") + 
-      theme(strip.background = element_rect(fill = NA, colour = NA), 
-            strip.placement = "outside") +
-      scale_fill_identity()
-    
-    if(year) {
-      g <- g + 
-        ggrepel::geom_text_repel(aes(label = Year), 
-                                 size = size,
-                                 box.padding = box.padding, 
-                                 min.segment.length = min.segment.length)
-    }
-    g
-  })
+  out <- lapply(dots, ggSR_LRP, 
+                year = year, size = size, 
+                box.padding = box.padding, 
+                min.segment.length = min.segment.length)
   
   cowplot::plot_grid(plotlist = out)
 }
 
 
-plot_SP <- function(..., year = TRUE) {
+ggSP <- function(x, year = TRUE, SPB = TRUE, title = TRUE, letter.legend) {
+  v <- x$SP %>% filter(!is.na(SP)) %>% mutate(SP_B = SP/B) %>% 
+    rename(`Surplus~production~(SP)` = SP, `SP/B` = SP_B) %>% reshape2::melt(id.vars = c("Year", "B")) %>%
+    mutate(Stock = x$RPvars$Stock, 
+           fill = ifelse(Year < x$Assess$Year, "grey", 
+                         ifelse(Year == x$Assess$Year, "black", "white")))
+  
+  if(!SPB) v <- filter(v, variable != "SP/B")
+  if(!title) v$Stock <- ""
+  
+  g <- ggplot(v, aes(B, value)) + 
+    geom_path() + 
+    geom_point(aes(fill = fill), shape = 21) +
+    geom_hline(yintercept = 0, linetype = 3) + 
+    facet_grid(vars(variable), vars(Stock), labeller = label_parsed, scales = "free_y", switch = "y") + 
+    expand_limits(x = 0, y = 0) + 
+    theme_bw() +
+    theme(strip.background = element_rect(fill = NA, colour = NA), 
+          strip.placement = "outside",
+          axis.title.y = element_blank(),
+          panel.spacing.y = unit(0, "in")) + 
+    labs(x = "Total Biomass (B)") +
+    scale_fill_identity()
+  
+  if(!is.na(x$RPvars$Yr_SP)) {
+    B_SP <- x$SP$B[x$SP$Year == x$RPvars$Yr_SP]
+    g <- g + geom_vline(xintercept = B_SP, linetype = 2)
+  }
+  if(!missing(letter.legend)) {
+    lett <- data.frame(variable = factor(levels(v$variable), levels = levels(v$variable)),
+                       Stock = v$Stock %>% unique(),
+                       txt = letter.legend)
+    if(!SPB) lett <- filter(lett, variable != "SP/B")
+    g <- g + geom_text(data = lett, aes(label = txt), x = Inf, y = Inf, hjust = "inward", vjust = "inward")
+    
+  }
+  
+  if(year) g <- g + ggrepel::geom_text_repel(aes(label = Year))
+  
+  g
+}
+
+plot_SP <- function(..., year = TRUE, SPB = TRUE) {
   dots <- list(...)
   
-  out <- lapply(1:length(dots), function(i) {
-    
-    v <- dots[[i]]$SP %>% filter(!is.na(SP)) %>% mutate(SP_B = SP/B) %>% 
-      rename(`Surplus~production~(SP)` = SP, `SP/B` = SP_B) %>% reshape2::melt(id.vars = c("Year", "B")) %>%
-      mutate(Stock = dots[[i]]$RPvars$Stock, 
-             fill = ifelse(Year < dots[[i]]$Assess$Year, "grey", 
-                           ifelse(Year == dots[[i]]$Assess$Year, "black", "white")))
-    
-    g <- ggplot(v, aes(B, value)) + 
-      geom_path() + 
-      geom_point(aes(fill = fill), shape = 21) +
-      geom_hline(yintercept = 0, linetype = 3) + 
-      facet_grid(vars(variable), vars(Stock), labeller = label_parsed, scales = "free_y", switch = "y") + 
-      expand_limits(x = 0, y = 0) + 
-      theme_bw() +
-      theme(strip.background = element_rect(fill = NA, colour = NA), 
-            strip.placement = "outside",
-            axis.title.y = element_blank(),
-            panel.spacing.y = unit(0, "in")) + 
-      labs(x = "Biomass (B)") +
-      scale_fill_identity()
-    
-    if(!is.na(dots[[i]]$RPvars$Yr_SP)) {
-      B_SP <- dots[[i]]$SP$B[dots[[i]]$SP$Year == dots[[i]]$RPvars$Yr_SP]
-      g <- g + geom_vline(xintercept = B_SP, linetype = 2)
-    }
-    
-    if(year) g <- g + ggrepel::geom_text_repel(aes(label = Year))
-    g
-  })
-  
+  out <- lapply(dots, year = year, SPB = SPB)
   cowplot::plot_grid(plotlist = out)
 }
 
