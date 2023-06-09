@@ -20,7 +20,10 @@ get_ref_pt <- function(Hist, OM, Year_assess,
               Fec = Hist@SampPars$Stock$Fec_Age[1, , y])
   })
   
-  SP <- RPC::LRP_SP(Hist, "none")$Quantile[, "Median"]
+  do_SP <- RPC::LRP_SP(Hist, "none")
+  
+  SP <- do_SP$Quantile[, "Median"]
+  Removals <- do_SP$Removals[1, ]
   B <- Hist@TSdata$Biomass[1, , ] %>% rowSums()
   
   SBMSY <- Hist@Ref$ByYear$SSBMSY[1, 1:OM@nyears]
@@ -46,6 +49,8 @@ get_ref_pt <- function(Hist, OM, Year_assess,
                                 Mat_at_Age = Hist@SampPars$Stock$Mat_age[1, , y],
                                 Fec_at_Age = Hist@SampPars$Stock$Fec_Age[1, , y],
                                 V_at_Age = Hist@SampPars$Fleet$V_real[1, , y],
+                                relRfun = function(...) NULL,
+                                SRRpars = list(),
                                 maxage = OM@maxage,
                                 plusgroup = 1)
       
@@ -104,7 +109,8 @@ get_ref_pt <- function(Hist, OM, Year_assess,
   RPts <- data.frame(Year = Year, FM = FM, FMSY = FMSY, Fmed = Fmed, SPR = SPR, SPRdyn = SPRdyn, R = R, 
                      SB = SB, SBMSY = SBMSY, SB0 = SB0, SB0dyn = SB0dyn, SB_SRP = BSRP, SB_recover = Brecover, SB_Rmax = SB_Rmax, 
                      SB_90 = SB90, SB_SP = B_SP, phi0 = phi0,
-                     M = Hist@SampPars$Stock$Marray[1, 1:length(Year)]) %>% 
+                     M = Hist@SampPars$Stock$Marray[1, 1:length(Year)],
+                     Removals = Removals) %>% 
     mutate(Stock = Name)
   
   RPvars <- data.frame(RpS_med = median(RpS[Year >= Yr_Fmed]), RpS_90 = RpS_90, R_90 = R_90, 
@@ -202,32 +208,62 @@ plot_B <- function(...) {
 
 
 
-gghist <- function(x, title = TRUE, letter.legend) {
+gghist <- function(x, title = TRUE, letter.legend, retro_only = TRUE, SBref = TRUE) {
   v <- x$RPts %>% 
-    select(Year, SB, R, FM, M, Stock) %>% 
+    select(Year, SB, R, FM, M, Stock, FMSY) %>% 
     rename(Recruitment = R, F = FM) %>%
     reshape2::melt(id.vars = c("Year", "Stock")) %>%
-    mutate(Mort = ifelse(variable == "M", "M", "F"), 
-           variable = as.character(variable))
-  v$variable[v$variable == "M" | v$variable == "F"] <- "Mortality~rate"
+    mutate(Mort = ifelse(variable == "M", "M", ifelse(variable == "FMSY", "FMSY", "F")), 
+           variable = as.character(variable),
+           linewidth = ifelse(variable == "SB", 1.5, 0.5))
+  v$variable[v$variable %in% c("M", "F", "FMSY")] <- "Mortality~rate"
   v$variable <- factor(v$variable, levels = c("SB", "Mortality~rate", "Recruitment"))
+  if(retro_only) v <- filter(v, Year <= x$Assess$Year)
   if(!title) v$Stock <- ""
   
-  g <- ggplot(v, aes(Year, value)) + 
-    geom_line(aes(linetype = Mort)) + 
+  g <- ggplot(v, aes(Year, value))
+  
+  if (SBref) {
+    SB_ref <- x$RPts %>%
+      select(Year, SBMSY, SB0, SB0dyn, Stock) %>%
+      reshape2::melt(id.var = c("Year", "Stock"), variable.name = "SBtype") %>%
+      mutate(variable = factor("SB"))
+    
+    if(retro_only) {
+      SB_ref <- filter(SB_ref, Year <= x$Assess$Year)
+    }
+    
+    g <- g + 
+      geom_line(data = SB_ref, aes(Year, value, group = SBtype), inherit.aes = FALSE) +
+      geom_point(data = SB_ref %>% filter(Year %in% floor(seq(min(Year), max(Year), length.out = 10))), 
+                 aes(Year, value, shape = SBtype), inherit.aes = FALSE) +
+      scale_shape_manual("SB reference\npoint",
+                         values = c("SB0" = 16, "SB0dyn" = 1, "SBMSY" = 8),
+                         labels = c("SB0" = expression(SB[0~eq]), "SB0dyn" = expression(SB[0~dyn]), "SBMSY" = expression(SB[MSY])))
+  }
+  
+  g <- g +
+    geom_line(aes(linetype = Mort, linewidth = linewidth)) + 
     facet_grid(rows = vars(variable), 
                cols = vars(Stock), 
                labeller = label_parsed, 
                scales = "free", 
-               switch = "y") + 
-    expand_limits(y = 0) + 
-    geom_vline(xintercept = x$Assess$Year, linetype = 2) + 
+               switch = "y") +
     theme_bw() +
+    expand_limits(y = 0) +
     theme(strip.background = element_rect(fill = NA, colour = NA), 
           axis.title.y = element_blank(),
           panel.spacing = unit(0, "in"),
           strip.placement = "outside") +
-    labs(linetype = "Mortality\nrate")
+    scale_linetype_manual("Mortality\nrate",
+                          labels = c("F" = "F", "M" = "M", "FMSY" = expression(F[MSY])),
+                          values = c("F" = 1, "M" = 2, "FMSY" = 3)) +
+    scale_linewidth_identity()
+  
+  
+  if(!retro_only) {
+    g <- g + geom_vline(xintercept = x$Assess$Year, linetype = 2) 
+  }
   
   if(!missing(letter.legend)) {
     lett <- data.frame(variable = factor(levels(v$variable), levels = levels(v$variable)),
@@ -236,7 +272,10 @@ gghist <- function(x, title = TRUE, letter.legend) {
     
     g <- g + geom_text(data = lett, aes(label = txt), x = Inf, y = Inf, hjust = "inward", vjust = "inward")
   }
-  g
+  
+  g + guides(shape = guide_legend(order = 1), 
+             linetype = guide_legend(order = 2))
+  
 }
 
 plot_Hist <- function(...) {
@@ -295,7 +334,7 @@ ggSR_LRP <- function(x, year = FALSE,
   
   SRRvars <- as.data.frame(x$RPvars) %>% mutate(Panel = factor(panel_labs[1], levels = panel_labs))
   
-  if(!title) vout$Stock <- SRpred$Stock <- SRPvars$Stock <- SRRvars$Stock <- ""
+  #if(!title) vout$Stock <- SRpred$Stock <- SRPvars$Stock <- SRRvars$Stock <- ""
   
   g <- ggplot(vout, aes(SB, R)) + 
     geom_point(aes(fill = fill), shape = 21) + 
@@ -327,9 +366,6 @@ ggSR_LRP <- function(x, year = FALSE,
                inherit.aes = FALSE, 
                shape = 15, size = 3,
                aes(x = SBRmax50, y = Rmax50)) + 
-    facet_grid(cols = vars(Stock), 
-               rows = vars(Panel), 
-               labeller = label_parsed) + 
     expand_limits(x = 0) + 
     #coord_cartesian(ylim = c(0, 1.1 * max(vout$R))) +
     theme_bw() +
@@ -355,6 +391,17 @@ ggSR_LRP <- function(x, year = FALSE,
                                box.padding = box.padding, 
                                min.segment.length = min.segment.length)
   }
+  
+  if(title) {
+    g <- g +
+      facet_grid(cols = vars(Stock), 
+                 rows = vars(Panel), 
+                 labeller = label_parsed)
+  } else {
+    g <- g + 
+      facet_wrap(vars(Panel), labeller = label_parsed, ncol = 1, strip.position = "right")
+  }
+  
   g
 }
 
@@ -372,20 +419,27 @@ plot_SR_LRP <- function(..., year = FALSE, size = 2, box.padding = 0.1, min.segm
 
 
 ggSP <- function(x, year = TRUE, SPB = TRUE, title = TRUE, letter.legend) {
-  v <- x$SP %>% filter(!is.na(SP)) %>% mutate(SP_B = SP/B) %>% 
-    rename(`Surplus~production~(SP)` = SP, `SP/B` = SP_B) %>% reshape2::melt(id.vars = c("Year", "B")) %>%
+  v <- x$SP %>% 
+    filter(!is.na(SP)) %>% 
+    mutate(SP_B = SP/B) %>% 
+    rename(`Surplus~production~(SP)` = SP, `SP/B` = SP_B) %>% 
+    reshape2::melt(id.vars = c("Year", "B")) %>%
     mutate(Stock = x$RPvars$Stock, 
            fill = ifelse(Year < x$Assess$Year, "grey", 
                          ifelse(Year == x$Assess$Year, "black", "white")))
   
-  if(!SPB) v <- filter(v, variable != "SP/B")
-  if(!title) v$Stock <- ""
+  if(SPB) {
+    v <- filter(v, variable == "SP/B")
+  } else {
+    v <- filter(v, variable == "Surplus~production~(SP)")
+  }
+  #if(!title) v$Stock <- ""
   
   g <- ggplot(v, aes(B, value)) + 
     geom_path() + 
     geom_point(aes(fill = fill), shape = 21) +
     geom_hline(yintercept = 0, linetype = 3) + 
-    facet_grid(vars(variable), vars(Stock), labeller = label_parsed, scales = "free_y", switch = "y") + 
+    #facet_grid(vars(variable), vars(Stock), labeller = label_parsed, scales = "free_y", switch = "y") + 
     expand_limits(x = 0, y = 0) + 
     theme_bw() +
     theme(strip.background = element_rect(fill = NA, colour = NA), 
@@ -403,12 +457,24 @@ ggSP <- function(x, year = TRUE, SPB = TRUE, title = TRUE, letter.legend) {
     lett <- data.frame(variable = factor(levels(v$variable), levels = levels(v$variable)),
                        Stock = v$Stock %>% unique(),
                        txt = letter.legend)
-    if(!SPB) lett <- filter(lett, variable != "SP/B")
+    if(SPB) { # May not need
+      lett <- filter(lett, variable == "SP/B")
+    } else {
+      lett <- filter(lett, variable == "Surplus~production~(SP)")
+    }
     g <- g + geom_text(data = lett, aes(label = txt), x = Inf, y = Inf, hjust = "inward", vjust = "inward")
     
   }
   
-  if(year) g <- g + ggrepel::geom_text_repel(aes(label = Year))
+  if(year) g <- g + ggrepel::geom_text_repel(aes(label = Year), max.overlaps = 5)
+  
+  if(title) {
+    g <- g + 
+      facet_grid(vars(variable), vars(Stock), labeller = label_parsed, scales = "free_y", switch = "y")
+  } else {
+    g <- g +
+      facet_wrap(vars(variable), labeller = label_parsed, scales = "free_y", strip.position = "left")
+  }
   
   g
 }
@@ -416,7 +482,7 @@ ggSP <- function(x, year = TRUE, SPB = TRUE, title = TRUE, letter.legend) {
 plot_SP <- function(..., year = TRUE, SPB = TRUE) {
   dots <- list(...)
   
-  out <- lapply(dots, year = year, SPB = SPB)
+  out <- lapply(dots, ggSP, year = year, SPB = SPB)
   cowplot::plot_grid(plotlist = out)
 }
 
@@ -485,7 +551,10 @@ SRR <- function(x, R, S, rel = c("hockey_stick", "Ricker", "BH", "sBH"),
 }
 
 calc_phi0 <- function(M, Wt, Mat, Fec) {
-  1/MSEtool:::Ref_int_cpp(1e-8, M, Wt, Mat, Fec, rep(0, length(M)), length(M) - 1)[3, 1]
+  1/MSEtool:::Ref_int_cpp(1e-8, M, Wt, Mat, Fec, rep(0, length(M)),
+                          relRfun = function(...) NULL, 
+                          SRRpars = list(),
+                          length(M) - 1)[3, 1]
 }
 
 plot_ts <- function(LRP) {
