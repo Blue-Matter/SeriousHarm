@@ -232,14 +232,18 @@ gghist <- function(x, title = TRUE, letter.legend, retro_only = TRUE, SBref = TR
     if(retro_only) {
       SB_ref <- filter(SB_ref, Year <= x$Assess$Year)
     }
-    
+    SB_ref_labels <- c("SB0" = expression(SB[0~eq]), "SB0dyn" = expression(SB[0~dyn]), "SBMSY" = expression(SB[MSY]))
     g <- g + 
-      geom_line(data = SB_ref, aes(Year, value, group = SBtype), inherit.aes = FALSE) +
+      geom_line(data = SB_ref, aes(Year, value, group = SBtype, colour = SBtype), inherit.aes = FALSE) +
       geom_point(data = SB_ref %>% filter(Year %in% floor(seq(min(Year), max(Year), length.out = 10))), 
                  aes(Year, value, shape = SBtype), inherit.aes = FALSE) +
       scale_shape_manual("SB reference\npoint",
                          values = c("SB0" = 16, "SB0dyn" = 1, "SBMSY" = 8),
-                         labels = c("SB0" = expression(SB[0~eq]), "SB0dyn" = expression(SB[0~dyn]), "SBMSY" = expression(SB[MSY])))
+                         labels = SB_ref_labels) +
+      scale_colour_manual("SB reference\npoint",
+                          values = c("black", "grey60", "grey30"),
+                          labels = SB_ref_labels)
+    
   }
   
   g <- g +
@@ -274,6 +278,7 @@ gghist <- function(x, title = TRUE, letter.legend, retro_only = TRUE, SBref = TR
   }
   
   g + guides(shape = guide_legend(order = 1), 
+             colour = guide_legend(order = 1),
              linetype = guide_legend(order = 2))
   
 }
