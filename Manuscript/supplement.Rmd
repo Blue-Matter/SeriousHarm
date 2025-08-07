@@ -1,0 +1,149 @@
+---
+title: "Supplementary materials to: Retrospective comparisons of candidate limit reference points for assessed stocks"
+author: "Quang C. Huynh, Robyn E. Forrest, Adrian Hordyk, Tom Carruthers"
+output: 
+  bookdown::word_document2:
+    citation_package: biblatex
+    global_numbering: false
+    toc: true
+link-citations: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	out.width = "6in",
+	warning = TRUE,
+	warnings = TRUE
+)
+library(flextable)
+library(ftExtra)
+library(tidyverse)
+```
+
+\newpage
+
+# Summary figures
+
+This section provides for the historical dynamics of the 12 case studies for which the summary figures was not presented in the main text:
+
+(ref:fig-gag) Historical dynamics for SA gag grouper. Time series up to the year of established serious harm (ESH) of (a) spawning biomass (bold line), (b) fishing and natural mortality rate, and (c) recruitment, alongside various LRPs (legend). In stock-recruit panels (d-e), points plot the historical recruitment with the corresponding spawning biomass. Black circles indicate the value for the year of ESH, grey points denote values for antecedent years, and white points for values in subsequent years. The curved line in (d) shows the fitted stock-recruit relationship, with the dotted horizontal corresponding to the recruitment at half of the maximum level, with the corresponding biomass, $SB_{0.5\textrm{Rmax}}$, at the vertical dashed line. Dotted lines in panel (e) indicate the 90th percentile of recruitment (horizontal line) and the 90th percentile replacement line (diagonal line). The intersection is the $SB_{0.9R/S}$ reference point (dashed vertical line). Panel (f) is a phase plot of surplus production over time, with the vertical, dashed line indicating a biomass threshold for serious harm below which there is very low to no surplus production.
+
+```{r gag, fig.cap="(ref:fig-gag)"}
+knitr::include_graphics(here::here("Figures/case_studies/3_SA_gag.png"))
+```
+
+```{r plaice, fig.cap="Historical dynamics for NAFO plaice. See Figure 1.1 caption for further description."}
+knitr::include_graphics(here::here("Figures/case_studies/4_NAFO_plaice.png"))
+```
+
+```{r nafo-cod, fig.cap="Historical dynamics for NAFO cod. See Figure 1.1 caption for further description."}
+knitr::include_graphics(here::here("Figures/case_studies/5_NAFO_cod.png"))
+```
+
+```{r ar, fig.cap=" Historical dynamics for NE Acadian redfish. See Figure 1.1 caption for further description."}
+knitr::include_graphics(here::here("Figures/case_studies/7_NE_redfish.png"))
+```
+
+```{r swo, fig.cap="Historical dynamics for NAtl swordfish. See Figure 1.1 caption for further description."}
+knitr::include_graphics(here::here("Figures/case_studies/8_ICCAT_SWO.png"))
+```
+
+```{r darkblotched, fig.cap="Historical dynamics for US darkblotched rockfish. See Figure 1.1 caption for further description."}
+knitr::include_graphics(here::here("Figures/case_studies/9_WC_darkblotched.png"))
+```
+
+```{r hom, fig.cap="Historical dynamics for NEA horse mackerel. See Figure 1.1 caption for further description."}
+knitr::include_graphics(here::here("Figures/case_studies/10_NEA_hom.png"))
+```
+
+```{r cowcod, fig.cap="Historical dynamics for SCB cowcod. See Figure 1.1 caption for further description."}
+knitr::include_graphics(here::here("Figures/case_studies/11_SCB_cowcod.png"))
+```
+
+```{r bet, fig.cap="Historical dynamics for Atlantic bigeye tuna. See Figure 1.1 caption for further description."}
+knitr::include_graphics(here::here("Figures/case_studies/12_ICCAT_BET.png"))
+```
+
+```{r rp, fig.cap="Historical dynamics for SA red porgy. See Figure 1.1 caption for further description."}
+knitr::include_graphics(here::here("Figures/case_studies/13_SA_RedPorgy.png"))
+```
+
+```{r gm-cod, fig.cap="Historical dynamics for GM (Gulf of Maine) cod. See Figure 1.1 caption for further description."}
+knitr::include_graphics(here::here("Figures/case_studies/15_GoM_cod.png"))
+```
+
+```{r gsl-cod, fig.cap="Historical dynamics for sGSL (southern Gulf of St. Lawrence) cod. See Figure 1.1 caption for further description."}
+knitr::include_graphics(here::here("Figures/case_studies/16_sGSL_cod.png"))
+```
+
+\newpage
+
+# Time series figures
+
+This section provides time series figures of the LRP indicators for all 16 case studies.
+
+```{r ts-yt, fig.cap="Time series of status relative to candidate LRPs for SNE yellowtail flounder."}
+knitr::include_graphics(here::here("Figures/Hist/ts_1_SNE_yt.png"))
+```
+
+```{r ts-rs, fig.cap="Time series of status relative to candidate LRPs for GoM Red Snapper."}
+knitr::include_graphics(here::here("Figures/Hist/ts_2_GoM_RS.png"))
+```
+
+```{r ts-gag, fig.cap="Time series of status relative to candidate LRPs for SA gag grouper."}
+knitr::include_graphics(here::here("Figures/Hist/ts_3_SA_gag.png"))
+```
+
+```{r ts-plaice, fig.cap="Time series of status relative to candidate LRPs for NAFO plaice."}
+knitr::include_graphics(here::here("Figures/Hist/ts_4_NAFO_plaice.png"))
+```
+
+```{r ts-nafo-cod, fig.cap="Time series of status relative to candidate LRPs for NAFO cod."}
+knitr::include_graphics(here::here("Figures/Hist/ts_5_NAFO_cod.png"))
+```
+
+```{r ts-wcvi, fig.cap="Time series of status relative to candidate LRPs for WCVI Pacific herring."}
+knitr::include_graphics(here::here("Figures/Hist/ts_6_WCVI_herring.png"))
+```
+
+```{r ts-ar, fig.cap="Time series of status relative to candidate LRPs for NE Acadian redfish."}
+knitr::include_graphics(here::here("Figures/Hist/ts_7_NE_redfish.png"))
+```
+
+```{r ts-swo, fig.cap="Time series of status relative to candidate LRPs for NAtl swordfish."}
+knitr::include_graphics(here::here("Figures/Hist/ts_8_ICCAT_SWO.png"))
+```
+
+```{r ts-darkblotched, fig.cap="Time series of status relative to candidate LRPs for US darkblotched rockfish."}
+knitr::include_graphics(here::here("Figures/Hist/ts_9_WC_darkblotched.png"))
+```
+
+```{r ts-hom, fig.cap="Time series of status relative to candidate LRPs for NEA horse mackerel."}
+knitr::include_graphics(here::here("Figures/Hist/ts_10_NEA_hom.png"))
+```
+
+```{r ts-cowcod, fig.cap="Time series of status relative to candidate LRPs for SCB cowcod."}
+knitr::include_graphics(here::here("Figures/Hist/ts_11_SCB_cowcod.png"))
+```
+
+```{r ts-bet, fig.cap="Time series of status relative to candidate LRPs for Atlantic bigeye tuna."}
+knitr::include_graphics(here::here("Figures/Hist/ts_12_ICCAT_BET.png"))
+```
+
+```{r ts-rp, fig.cap="Time series of status relative to candidate LRPs for SA red porgy."}
+knitr::include_graphics(here::here("Figures/Hist/ts_13_SA_RedPorgy.png"))
+```
+
+```{r ts-gsl-herring, fig.cap="Time series of status relative to candidate LRPs sGSL (southern Gulf of St. Lawrence) herring."}
+knitr::include_graphics(here::here("Figures/Hist/ts_14_sGSL_herring.png"))
+```
+
+```{r ts-gm-cod, fig.cap="Time series of status relative to candidate LRPs for GM (Gulf of Maine) cod."}
+knitr::include_graphics(here::here("Figures/Hist/ts_15_GoM_cod.png"))
+```
+
+```{r ts-gsl-cod, fig.cap="Time series of status relative to candidate LRPs for sGSL (southern Gulf of St. Lawrence) cod."}
+knitr::include_graphics(here::here("Figures/Hist/ts_16_sGSL_cod.png"))
+```
+

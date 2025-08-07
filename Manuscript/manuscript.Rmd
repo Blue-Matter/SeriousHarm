@@ -1,0 +1,515 @@
+---
+title: "Retrospective comparisons of candidate limit reference points for assessed stocks"
+author: "Quang C. Huynh, Robyn E. Forrest, Adrian Hordyk, Tom Carruthers"
+date: "Proposed journals: Fish and Fisheries, Frontiers in Marine Science, North American Journal of Fisheries Management"
+output: 
+  bookdown::word_document2:
+    reference_docx: "manuscript_template.docx"
+    citation_package: biblatex
+    global_numbering: true
+bibliography: "refs.bib"
+link-citations: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	out.width = "6in",
+	warning = TRUE,
+	warnings = TRUE
+)
+library(flextable)
+library(ftExtra)
+library(tidyverse)
+```
+
+\newpage
+
+# Abstract
+
+Fisheries management relies on the use of limit reference points (LRPs) to identify undesirable states of nature where there is serious harm to fish stock productivity.
+In Canadian fisheries policy, the default provisional LRP is 40% of $SB_\textrm{MSY}$, the spawning biomass that produces maximum sustainable yield, although stock-specific alternatives are also possible.
+This paper is intended to identify the extent to which various candidate LRP methods, used in management globally or proposed in the scientific literature, and the corresponding threshold for detecting serious harm, agree with each other.
+The candidate LRPs were compared across 16 assessed stocks where serious harm had historically been identified through management action or documented scientific consensus.
+Most LRPs points defined by exploitation rate were triggered in these case studies, supporting the general presumption that continuous fishing pressure had been too high leading to breaching LRPs. 
+Biomass LRPs on average were triggered less frequently, although notable biomass declines were always observed.
+No individual LRP was triggered for all case studies, and the set of LRPs all triggered serious harm in just one case study.
+This behaviour indicates that the utility of candidate LRPs varies by on a case-by-case basis, frequently due to individual stock history and biological dynamics. 
+While many management systems operationalize the definition of limit reference points in the science advice process, our results highlight the necessity to retain some flexibility in defining limits to accommodate edge cases or exceptions where stock productivity is compromised, but may not be triggered by LRPs used by policy default.
+
+\newpage
+
+# Introduction
+
+Contemporary fisheries management relies on the use of reference points for determining status of exploited stocks [@restrepo1998; @dfo2009; @dawr2018; @ices2022]. 
+Reference points are benchmarks against which to measure management performance, representing desirable (targets) or undesirable (limits) stock outcomes [@unfsa1995; @sainsbury2008]. 
+In Canadian fisheries policy, the limit reference point (LRP) operationalizes an objective to avoid "serious harm" to fish stocks [@shelton2002; @dfo2009]. 
+Limits may be expressed in terms of fishing mortality, where continued exploitation above the limit may result in the stock entering or failing to recover from a state of serious harm. 
+More commonly, LRPs are expressed in terms of spawning biomass (SB), where stock states below the LRP result in serious, slowly reversible or irreversible impacts [@sainsbury2008]. 
+The LRP in many jurisdictions also serves as an operational control point to trigger rebuilding plans when breached [@marentette2020].
+Recent updates to Canada’s *Fisheries Act* (Fisheries Act R.S.C., 1985, c. F-14, as amended by Bill C-68, June 21 2019) have legislated this requirement for all major fish stocks, and similar legislation or policy applies in other jurisdictions, as reviewed in @kronlund2021. 
+
+A recent review described serious harm as any undesirable change to the biological attributes of the stock, which may be associated with: (i) a loss of resilience, i.e., impaired ability to rebuild, exceed replacement or recover from perturbation; (ii) impaired productivity, resulting from changes to processes such as recruitment, growth and survival; (iii) increased risk of depensation or Allee effects; or (iv) more generally, depleted states where population dynamics are not well-understood [@barrett2024, and references therein]. 
+Serious harm may only be detectable only after it has occurred. 
+Therefore, the LRP should serve as a threshold to increased risk of serious harm, rather than be placed at the threshold of serious harm itself [@dfo2016; @msc2018; @dfo2021].
+
+Recruitment overfishing is likely the most widely recognized state of serious harm, defined as the state where the spawning stock becomes so small that the stock cannot replace itself [@sissenwine1987; @shelton2002; @mace1993; @myers1994].
+Serious harm also occurs when a population becomes small enough for depensatory or Allee effects to occur [@hutchings2014]. 
+Allee effects are a result of per capita declines in population growth rate with declining abundance and can manifest as "predator pits" which trap populations at low stock sizes [@courchamp1999; @walters2001; @gascoigne2004; @barrett2025].
+
+Detecting depensation has generally proved difficult [@myers1994; @liermann1997; @hilborn2014], although a meta-analysis by @keith2012 found evidence of "Allee transition region", where classical compensatory dynamics weaken, and an “Allee threshold” below which depensatory dynamics occur.
+For stocks that exhibited weak compensation dynamics and for which Allee effects were detected, they found that spawning biomass was usually less than 10% of the maximum, with the strongest evidence for Allee effects in populations of Atlantic cod (*Gadus morhua*). 
+For some northwest Atlantic groundfish populations, Allee effects prevent them from recovering from low population states, likely driven by high predation rates by marine mammals [@swain2008; @swain2015; @neuenhoff2019]. 
+Recent studies suggest that depensation may be the mechanism preventing recovery of small pelagic stocks, and a depensatory relationship between natural mortality and population productivity has been shown to trap populations of small pelagic fish at low population size [@jacobsen2018]. 
+
+Various metrics representing serious harm have been proposed in the literature and used as LRPs or similar in management systems globally [@restrepo1999; @sainsbury2008, @ices2022]. 
+Examples for recruitment overfishing include the spawning biomass at which the expected recruitment is 50% of the maximum (or asymptotic) value from the SRR [@myers1994], or the inflection point of a hockey stick stock-recruitment curve [@ices2021_refpt].
+
+@hutchings2014 suggested an Allee threshold and Allee-transition threshold of approximately 0.26 $SB_\textrm{MSY}$ and 0.52 $SB_\textrm{MSY}$ (spawning biomass at maximum sustainable yield), respectively.
+The suggested Allee-transition threshold is consistent with a best practice limit reference point in jurisdictions such as the United States, which frequently defines 0.5 $SB_\textrm{MSY}$ as the threshold for overfished stocks [@hilborn2010].
+In Canada, the default provisional LRP, in the absence of a stock-specific value, is set lower at 0.4 SBMSY; a recent review found that this value had been used in 43% of assessed Canadian stocks which had an LRP [@marentette2021]. 
+
+Analyses of patterns in surplus production over time have also been used to investigate the behaviour of fished populations [@hilborn2001; @walters2008; @hilborn2014].
+The collapse of some stocks, especially forage fishes, and their failure to recover has been associated with persistent states of low production [@jacobson2001; @jacobsen2018]. 
+Persistent states of low production and low biomass (LP-LB) relative to stock history are consistent with definitions of serious harm and in some cases have been used to inform setting of reference points [@mohn2004; @forrest2023].
+
+LRPs as thresholds to increased risk of serious harm can be defined in terms of many other metrics [@marentette2021]. 
+Proxies for SBMSY such as the spawning potential ratio (SPR) [@mace1993; @clark2002], low historical states such as $SB_\textrm{loss}$, where "loss" is lowest observed stock size [@ices2021_refpt; @ices2022], or a large number of other empirical or semi-empirical indicators, such as indices of abundance [@marentette2021]. 
+Broad definitions of serious harm provide flexibility to set LRPs on a stock-by-stock basis, but can create ambiguity as to the most robust metrics to establish thresholds to serious harm.
+
+In this paper, we compare various candidate biomass and fishing mortality LRPs used to identify serious harm. 
+We then examine a suite of stocks, across a variety of jurisdictions, where serious harm has been identified through management action, e.g., fishing moratoria or implementation of rebuilding plans, or by documented scientific consensus. 
+We then evaluate which of the candidate LRPs would have been breached in the year of established serious harm (ESH) and the extent to which the various methods agree with each other. 
+The historical review can provide empirical guidance on which candidate LRPs consistently identified states of serious harm across the range of stocks and those that did not. 
+The degree of agreement in LRP methods across life history types and exploitation histories can inform best practices for selecting LRPs that most robustly represent thresholds to increased risk of serious harm.
+
+# Methods
+
+In this section, we identify the various limit reference points of interest, followed by the case studies used to compare the LRPs.
+
+LRPs may potentially be defined either in terms of fishing mortality rate (fishing pressure) or spawning biomass. A summary of reference points and the corresponding thresholds that indicate serious harm is provided in Table \@ref(tab:ref-pt).
+
+## F-based LRPs
+
+We evaluated three LRP metrics based on fishing mortality: $F_\textrm{MSY}$ (associated with maximum sustainable yield), $\textrm{SPR}_\textrm{eq}$ (equilibrium spawning potential ratio), and $\textrm{SPR}_\textrm{dyn}$ (dynamic SPR). 
+$F_\textrm{MSY}$ and $\textrm{SPR}_\textrm{eq}$ assume stationarity in productivity, while $\textrm{SPR}_\textrm{dyn}$ can accommodate time-varying productivity.
+
+Historically, limits to fishing mortality have been explored on the basis of identifying and avoiding $F_\textrm{crash}$, the fishing mortality above which the stock crashes because it is unable to replace itself [@sissenwine1983].
+$F_\textrm{crash}$ is the value associated with the replacement at the slope at the origin of a density-dependent stock recruitment relationship (SRR).
+A proposed empirical estimates of $F_\textrm{crash}$ is $F_\textrm{rep}$, the fishing mortality that corresponds to the replacement line fitted from historical estimates of spawning biomass and recruitment, when the relationship is approximately linear because recruitment is no longer density-dependent. 
+However, it has been recognized that $F_\textrm{crash}$ and associated proxies are too extreme as limit reference points because serious harm would have already been occurring prior to reaching these levels [@shelton2002; @quinn2005]. 
+Therefore, it was not further considered in this analysis. 
+
+Subsequently, $F_\textrm{MSY}$ has been proposed as a F-based limit reference point, and is lower value than $F_\textrm{crash}$.
+$F_\textrm{MSY}$ is the value that maximizes the yield curve and is calculated from fishery selectivity, stock-recruit relationship (SRR), and vital biological rates (growth, fecundity, and natural mortality), assuming stationary productivity and selectivity. 
+The $F/F_\textrm{MSY}$ in a given year is used as the LRP status indicator.
+
+Spawning potential ratio (SPR) is a measure of the impact of the fishing pressure on the per capita reproductive output of the stock. It describes the reduction in the long-term equilibrium spawning biomass per recruit relative to unfished conditions (F = 0). SPR ranges from 0 – 1 and approaches 1 as long-term F approaches zero. 
+SPR is a frequently used metric when it is difficult to establish or estimate the SRR. 
+Analyses have shown that SPR typically ranging from 0.30 – 0.50, depending on life history, serve as robust proxies for FMSY and avoiding F_crash [@clark2002]. 
+The same parameters used for the calculation of FMSY are needed to calculate SPR, with the exception of the stock-recruit parameters.
+
+There are two ways to calculating SPR, depending on whether SPR characterizes the anticipated effects of current fishing pressure or the cumulative effects of past and current fishing mortality. 
+Typically, SPR is calculated from a year-specific F, which would reflect the population SPR if this F were to persist in perpetuity. This is referred to as the equilibrium SPR and is calculated independently for each year.
+
+Second, dynamic SPR, or "transitional" SPR, can be used to reflect past mortality by calculating the spawning output based on the survival of current cohorts relative to unfished [@hordyk2015]. 
+This definition of SPR is dynamic because the calculation is dependent on the series of historical F. 
+Dynamic SPR reflects the reduction in spawning output from the cumulative effects of high fishing pressure. 
+For example, a fishery closure improves the equilibrium SPR immediately ($\textrm{SPR}_\textrm{eq}$ = 1), while dynamic SPR will increase more slowly to reflect the time needed for population recovery. 
+
+Compared to equilibrium SPR, dynamic SPR can more appropriately reflect characteristics of the current underlying population, e.g., truncation of the age structure for a depleted stock, especially for a long-lived species. 
+A single time series of F produces a corresponding series of dynamic SPR. 
+We do not know of any instances where dynamic SPR is currently used as a reference point.
+
+## Biomass LRPs
+
+Biomass-based LRPs identify a stock size at which the system has become less productive, frequently using one of two broad approaches. 
+The first approach uses LRPs derived from an equilibrium approach considering the stock recruit relationship (SRR), including (1) $SB_\textrm{MSY}$, the spawning biomass at maximum sustainable yield; (2) $SB_0$, unfished spawning biomass; and (3) $SB_{0.5\textrm{Rmax}}$, the biomass that produces half of the maximum expected recruitment.
+
+$SB_\textrm{MSY}$ is the equilibrium biomass expected from optimizing the yield curve (Table \@ref(tab:ref-pt)) and is frequently a natural choice for a reference point if optimal long-term yield is an objective of fisheries policy [@restrepo1999]. 
+With $SB_\textrm{MSY}$, serious harm is defined by reduced surplus production.
+To operationalize a limit with $SB_\textrm{MSY}$, some fraction, e.g., 40%, is identified such that the stock has significantly departed from the optimal biomass to meet fishery objectives.
+
+Equilibrium $SB_0$ is the biomass expected if there were no fishing mortality in perpetuity, and can be calculated from the intersection of the SRR and the unfished replacement line (Table \@ref(tab:ref-pt)). 
+Some fraction of $SB_0$, e.g., 20% $SB_0$, has been proposed as a threshold to recruitment overfishing [@beddington1983]. 
+Equilibrium $SB_0$ is frequently used as a proxy for $SB_\textrm{MSY}$ when there is difficulty in estimating the optimum of the yield curve.
+Higher fractions, e.g., 40% B0, may be used for low-productivity species.
+
+Alternatively, dynamic $SB_0$ has also been proposed as an alternative to equilibrium B0 to account for stochasticity in system dynamics and accounting for fluctuations in biomass not due to fishery exploitation [@maccall1985].
+A time series of dynamic $SB_0$ is obtained from an assessment model by reconstructing the population with F = 0, assuming that the state dynamics, e.g., recruitment deviations and biological parameters, are independent of F and biomass [@berger2019]. 
+A single model returns a time series of dynamic $SB_0$ and status is determined by the year-specific pair of biomass and dynamic $SB_0$.
+
+A third SRR-based limit reference point is $SB_{0.5\textrm{Rmax}}$, the spawning biomass at which the expected recruitment is 50% of the maximum (or asymptotic) value from the SRR [@myers1994]. 
+In contrast to a blanket recommendation of 20-40% $SB_0$ as a LRP, the corresponding fraction of $SB_0$ at $SB_{0.5\textrm{Rmax}}$ varies on the curvature of the SRR.
+
+The second approach to biomass LRPs identifies the limit from historical estimates of biomass and recruitment. 
+Historical LRPs include (1) $SB_\textrm{lowSP}$, low biomass with low surplus production; (2) $SB_\textrm{recover}$, historically low biomass with subsequent recovery; and (3) $SB_{0.9 R/S}$, low biomass with historically high recruitment. 
+For each of definitions, the LRP is the biomass in a historical year that met the defined conditions, but not all all stocks will exhibit the necessary conditions.
+
+Surplus production is the annual change in biomass after accounting for fishery removals and is the hypothetical change in stock size that would have occurred in the absence of fishing [@walters2008]. 
+In equilibrium, surplus production is predicted by the yield curve, with highest surplus production at some intermediate stock size. 
+In reality, stocks can remain persistently stuck in a state of low biomass with little or no surplus production [@mohn2004]. 
+In this low productivity, low biomass (LP-LB) state, stock recovery is impeded, potentially due to depensatory processes.
+The shift to low biomass, low surplus production state can be detected in a surplus production vs. biomass phase plot, and B_lowSP is a historical threshold at which the stock has entered this persistent LP-LB state identified upon visual inspection of a historical surplus production vs. biomass plot [@mohn2004; @forrest2023].
+
+$SB_\textrm{recover}$ is a historical low biomass from which the stock has since recovered. 
+In the absence of other explicit definitions of serious harm, this metric may reflect consensus on when a stock was in an undesirable state, e.g., @forrest2020; @dfo2012. 
+Frequently, $SB_\textrm{recover}$ is relatively easy to explain to stakeholders and can coincide with their historical perceptions of the stock [@duplisea2014].
+$SB_\textrm{recover}$ may correspond to the lowest observed stock size, but has an additional requirement that the stock has rebounded. 
+This method is specific to life history and trajectory, for example, if fishing mortality has been high followed by stock recovery (typically through increased recruitment). 
+In other words, $SB_\textrm{recover}$ is not applicable if a one-way trip with continuously declining biomass, has been estimated for a stock. 
+
+$SB_{0.9 R/S}$ is defined to be the biomass at the intersection of the 90th percentile of historical R/S (recruits per spawner) replacement lines, that each intersect the origin to annual pairs of spawning biomass and resulting recruitment, and the 90th percentile of historical recruitment [@serebryakov1991].
+This LRP definition identifies conditions favorable to survival of eggs to recruit stage (as indicated by high R/S) and strong cohorts (as indicated by high recruitment), i.e., strong year classes can still be produced at low stock sizes. 
+We do not know of any instances where $SB_{0.9 R/S}$ is used as a reference point.
+
+## Case studies
+
+We identified a variety of assessed stocks that have experienced serious harm at some point in their history. 
+Serious harm was identified by either management action, for example, fishing moratoria or implementation of rebuilding plans, or by documented scientific consensus (through grey literature; Table \@ref(tab:case-study)). 
+This last criterion allowed us to use stocks that have recently been assessed but may not have been actively managed in the past, for example, bycatch species or species in areas where there was little management in place. 
+
+Recent age-structured models were obtained with the goal of incorporating a range of biological taxa, management jurisdictions, and population dynamics leading to serious harm (Table \@ref(tab:case-study)).
+These models were used for various purposes, including those to provide science advice and others for research purposes.
+These results presented here are not intended to be definitive statements about stock status at any point in time.
+
+Assessment inputs, e.g., growth, maturity at age schedules, and outputs, e.g., stock numbers at age and year, were replicated as operating models in the MSEtool R package [@msetool] to ensure consistency in comparison. 
+Historical stock numbers at age at the beginning of the year were used to validate the import. 
+
+Stock assessment models may or may not incorporate a stock-recruit relationship in the estimation model. 
+For stocks without explicit SRR in the assessment, the SRR was fitted from estimates of spawning biomass and recruitment. 
+The Beverton-Holt SRR was the default choice for most cases, unless previous work elsewhere used the Ricker SRR to model the stock (Tables \@ref(tab:case-study)). 
+
+The year of established serious harm (ESH) was based on management action or consensus. 
+In this manner, we evaluate the candidate LRPs at a time when action was taken for the conservation of the stock. 
+The status indicator of individual stocks relative to each reference point presented in Table \@ref(tab:ref-pt) was calculated. 
+An additional indicator, $\Delta$ SB, the ratio of spawning biomass in the year of ESH and the first year of the assessment model, was used to characterize changes in stock abundance over time that is independent on any individual reference point. 
+
+Reference point calculations were facilitated by the RPC R package [@huynh2023]. 
+Reference points that assume equilibrium conditions, i.e., $F_\textrm{MSY}$, $SB_\textrm{MSY}$, and $SB_{0,eq}$, $\textrm{SPR}_\textrm{eq}$,  $SB_{0.5\textrm{Rmax}}$, can be year-specific if there is non-stationarity in biological or fishing dynamics, e.g., time-varying selectivity, growth, maturity, and/or natural mortality (Table \@ref(tab:case-study)). 
+In this study, we chose to calculate the status indicators using the biological parameters from the year of ESH. This approach follows common practice to benchmark the stock based on recent conditions (although see @ices2020 for alternative perspectives). 
+Time series of these reference points are shown in the Supplementary Materials and can demonstrate the impact of time-varying parameters on the productivity of the stock. 
+
+Two approaches were taken with these case studies for the reference point comparison. First, a meta-analysis was used to make comparisons of each reference point among stocks, considering the magnitude of the LRP status indicator and frequency that each indicator crossed the threshold defined in Table \@ref(tab:ref-pt). 
+Correlations between indicators identify their consistency towards identifying thresholds to serious harm. 
+
+Second, stock dynamics and history are considered in the status determination. 
+For this evaluation, a smaller subset of four individual case studies were explored. 
+The within-stock comparison of reference points can provide additional insights to identify situations when individual reference points may or may not detect serious harm.
+
+# Results
+
+We evaluated a total of 16 case studies (Table \@ref(tab:case-study), Figure \@ref(fig:ts)). 
+The case studies were geographically spread across stocks managed by the U.S. and Canada along both the Atlantic and Pacific coasts, along with North Atlantic stocks assessed in various management bodies. 
+Life history types represented here include temperate groundfish (*Pleuronectidae*; *Sebastidae*, *Gadidae*), reef fish (*Lutjanidae*, *Serranidae*, *Sparidae*), and pelagic fish (*Scombridae*; *Clupeidae*; *Xiiphidae*). 
+Stocks are listed in increasing values of $\Delta$ SB. 
+
+Among case studies, the various LRPs were generally correlated with each other and with $\Delta$ SB, with the latter denoting notable declines in stock abundance over time (Figures \@ref(fig:ts)--\@ref(fig:corr-B)).
+However, individual LRPs varied in the frequency of detecting serious harm, ranging from high frequency, such as with $F_\textrm{MSY}$ and $SB_{0.9R/S}$, to lower frequency, such as $SB_\textrm{MSY}$ (Table \@ref(tab:lrp)).
+
+Within case studies, there was only one out of 16 stocks where all candidate LRPs detected serious harm, i.e., yellowtail flounder (#1, Table \@ref(tab:lrp)).
+Otherwise, the various LRPs provided different levels of agreement ranging from high agreement (majority triggered serious harm) to mixed agreement. 
+There were also case studies where most LRPs did not detect serious harm, e.g., WCVI Pacific herring.
+The various levels of agreement among candidate LRPs are explored in the four case studies below.
+
+## Meta-analysis
+
+### F-based LRPs
+
+For the majority (11 out of 15) of stocks evaluated here, the $F/F_\textrm{MSY}$ ratio exceeded 1 when serious harm was established (Table \@ref(tab:lrp), Figure \@ref(fig:among)). 
+MSY reference points for NAFO plaice could not be estimated as the natural mortality resulted in replacement that is too low for surplus production.
+Similarly, both the static SPR and dynamic SPR were below 0.4 for a majority of stocks (10/16 and 14/16, respectively). 
+Dynamic SPR was somewhat more pessimistic than static SPR (most points are slightly left of the one-to-one line in the pairs plot of Figure \@ref(fig:corr-F)). 
+For example, the dynamic SPR for cowcod was 0.34 compared to the static SPR of 0.92, indicating that the serious harm is more likely to be recognized through cumulative effects of fishing mortality over time compared to the exploitation in the year of ESH. 
+
+All three F-based metrics were highly correlated with each other, as with $\Delta$ SB (correlations greater than 0.6, Figures \@ref(fig:among)--\@ref(fig:corr-F)). 
+For some stocks, e.g., WCVI Pacific herring (#7), F-based metrics did not exceed their thresholds, i.e., $F/F_\textrm{MSY}$ < 1, and static SPR and dynamic SPR both > 0.4, which indicate that perceptions of serious harm were not triggered by fishing. 
+These case studies are typically accompanied by changes in biological productivity, e.g., increases in natural mortality.
+
+### Biomass LRPs
+
+Across stocks, $SB/SB_\textrm{MSY}$ and $SB/SB_{0,eq}$ were positively correlated with $\Delta$ SB (correlation coefficients between 0.5-0.6; Figure \@ref(fig:among)). 
+Most stocks (13/15, excluding NAFO plaice) were below $SB_\textrm{MSY}$ in the year of ESH, but fewer (5/15) were below the limit of 0.4 $SB_\textrm{MSY}$ (Table \@ref(tab:lrp)). 
+Similarly, 5/15 stocks were below 20% $SB/SB_{0,eq}$.
+Several more case studies triggered the 20% $SB/SB_{0,dyn}$ LRP.
+The correlation between $SB/SB_\textrm{MSY}$ and $SB/SB_{0,eq}$ was high (Figure \@ref(fig:corr-B)), which is expected since the same parameters are used to calculating both.
+Similar to the F-based status indicators, equilibrium biomass LRPs ($SB_\textrm{MSY}$ and $SB_{0,eq}$) frequently did not trigger common thresholds to serious harm when there were increases in natural mortality (Table \@ref(tab:lrp)). 
+
+Stocks were below $SB_{0.5\textrm{Rmax}}$, the other SRR-based reference point, in only about half the cases (7/16, Table \@ref(tab:lrp)). 
+Many stocks had never been observed below this LRP (see Supplementary Materials). 
+This consideration may be important as an LRP when estimating the stock-recruit relationships across a wide range of stock sizes. 
+For example, the Beverton-Holt stock-recruit steepness parameter was estimated to be 0.99 for GoM Red Snapper as high recruitment was estimated at the lowest stock sizes (Figure \@ref(fig:rs)).
+Thus, $SB_{0.5\textrm{Rmax}}$ was estimated to be at an extremely low stock level.
+
+A low productivity, low biomass state was identified in only 8 out of 16 cases for calculating $SB_\textrm{lowSP}$, and stocks were below this threshold in 7 of 8 cases. 
+The exception was Gulf of Maine cod where $SB/SB_\textrm{lowSP}$ > 1 in the year of ESH. 
+While serious harm was identified in 2005, the shift to a low surplus production state occurred after the year of ESH, i.e., 2011. 
+In cases where this method was not applicable, no noticeable shift in surplus production was observed or high surplus production was seen at low stock sizes, e.g., Gulf of Mexico red snapper (Figure \@ref(fig:rs)).
+
+Eight of ten (8/10) stocks were below $SB_\textrm{recover}$, defined prior to the year of ESH. $SB_\textrm{recover}$ was not applicable for six stocks that did not have a demonstrated history of decline and recovery. 
+Finally, in almost all cases (15/16), the biomass was found to be below $SB_{0.9R/S}$ (Table \@ref(tab:lrp)).
+
+Most biomass serious harm metrics were correlated with $\Delta$ SB, indicating that large decreases in biomass concurrently occurred over time (Figure \@ref(fig:ts)). 
+The lowest correlation was seen with $SB_\textrm{recover}$, since the metric frequently uses historical biomass from a different time period than the initial year of the assessment. 
+Historical biomass reference points had high correlation between each other (Figure \@ref(fig:ts)). There was also a high correlation between BMSY and equilibrium B0. 
+Otherwise, the correlations were lower between historical and equilibrium SRR-based LRPs, as a group, and within equilibrium SRR-based LRPs. 
+
+## Case study 1: SNE yellowtail flounder  
+
+While the southern New England stock of yellowtail flounder (*Limanda ferruginea*) had historically supported a large fishery during most of the 20th century, the population has been in a depleted state since the 1990s (Figure \@ref(fig:yt); @nefsc2012). 
+While there have been catch reductions since the 1990s, fishing mortality remains high due to significantly smaller biomass (Figure \@ref(fig:yt)). 
+A formal rebuilding plan was adopted by the New England Fishery Management Council in 2005 (the year of ESH).
+
+In our analysis, all LRPs indicated that the stock had crossed a threshold for serious harm at that time (Table \@ref(tab:lrp)).
+After fitting stock-recruit relationship to historical SB and recruitment, the MSY reference points indicated $F/F_\textrm{MSY}$ > 1, and the spawning biomass was at 0.03 $SB_\textrm{MSY}$ in the year of ESH.
+Both static and dynamic SPR were below 0.4 with high fishing mortality relative to natural mortality. 
+
+Low recruitment has been observed since the early 1990s, along with the absence of large pulses in recruitment seen in prior years (Figure \@ref(fig:yt)).
+This lower recruitment period is reflected in historical LRPs with the stock below both $SB_\textrm{recover}$ (spawning biomass in 1987) and $SB_{0.9R/S}$ in 2005, with $SB_{0.9R/S}$ approximately twice the value of $SB_\textrm{recover}$).
+Low productivity was also detected in the surplus production phase plot, with little surplus production since 1987, and the stock has not exited the low productivity zone.
+Most of these metrics dropped suddenly in the early 1990s when the recruitment strength drastically decreased, and remained low for a decade until the rebuilding plan was formalized.
+
+## Case study 2: Gulf of Mexico red snapper
+
+Directed harvest of red snapper (*Lutjanus campechanus*) in the U.S. Gulf of Mexico began in the mid-19th century and quickly expanded in both the commercial and recreational sector. 
+Juvenile red snapper experience mortality as discards from the Gulf of Mexico shrimp fishery [@forrest2013]. 
+Early assessments in the mid 1980s through the early 1990s indicated that fishing mortality was extremely high and that management measures were recommended to reduce mortality [@goodyear1993].
+Amendment 1 of the Reef Fish Fishery Management Plan was adopted in 1990, the year of ESH, which enacted bag limits, size limits, and days-at-sea access limits as part of a rebuilding plan.
+
+Almost all applicable reference points supported the fact that the stock was experiencing serious harm in 1990 (Table \@ref(tab:lrp)).
+SPR and biomass metrics had been steadily decreasing leading up to 1990. 
+With continually high fishing mortality up to that point, F exceeded $F_\textrm{MSY}$ and both static and dynamic SPR were below 0.1 (Table 2). The estimated spawning biomass notably dropped to 0.12 $SB_\textrm{MSY}$ and 0.02 $SB_\textrm{0,eq}$ (equilibrium) over the course of the three decades preceding 1990.
+
+The stock has experienced high recruitment at the lowest stock sizes.
+The recent assessment assumed steepness of 0.99, so the biomass at 50% of expected recruitment, $SB_{0.5\textrm{Rmax}}$, was very small and not suitable here. With these dynamics, $SB_\textrm{lowSP}$ was also not identifiable as high surplus production was observed at low stock size (Figure \@ref(fig:rs)). 
+Finally, $SB_\textrm{recover}$, another historical-based reference point, was not applicable for red snapper as only a one-way decline had been estimated up to that point.
+
+## Case study 3: WCVI Pacific herring
+
+Pacific herring (*Clupeus pallasii*) in British Columbia, Canada has experienced several boom-and-bust cycles resulting in two fishery closures since the early 20th century [@cleary2019]. 
+Commercial and reduction fisheries for Pacific herring developed in the early 1960s leading to a collapse and a fishery closure in 1967.
+Afterwards, a fishery targeting the roe developed when commercial access to the resource was re-established in 1971. 
+Recently, population declines in the West Coast Vancouver Island stock have led to a second closure of the fishery since 2005, when we evaluate the candidate LRPs. 
+
+The two fishery closures provides insight on the behavior of LRPs when different factors led to management action. 
+In 1967, the F-based reference points were more pessimistic, with F > FMSY for example (Figure \@ref(fig:wcvi)). 
+The decline in the stock that led to the second closure in 2005 is attributable to natural mortality, increasing since 1990 to its highest around the time of the closure. 
+
+Since the poor state of the stock in 2005 can be attributable to high natural mortality, F-based reference points did not cross the threshold for identifying serious harm, with $F < F_\textrm{MSY}$ and SPR > 0.8 (Table \@ref(tab:lrp)). 
+Status based on SRR-based reference points including $SB_\textrm{MSY}$, $SB_0$ and $SB_{0.5\textrm{Rmax}}$, also did not detect serious harm. 
+
+Historical-based reference points identified serious harm in 2005, with the stock below $SB_\textrm{recover}$, the biomass in 1967, and $SB_{0.9R/S}$, as lower recruitment was entering the population.
+The stock in 2005 also started to enter a period of low surplus production, which became more evident afterwards (Figure \@ref(fig:wcvi)). 
+Further discussion on candidate LRPs for this stock is available in @forrest2023.
+
+## Case study 4: southern GSL Atlantic herring
+
+The Atlantic herring (*Clupeus harengus*) stock in the southern Gulf of St. Lawrence consists of a genetically distinct spring and fall spawning component; the spring spawning component is considered here. 
+Most harvests are from a nearshore gillnet fishery and an offshore purse seine fishery. 
+Since 1992, the stock has entered a state with low recruitment rates, along with decreased weight-at-age and increased natural mortality. 
+
+This low recruitment regime is coincident with increased sea surface temperatures and reduced cold-water zooplankton prey abundance [@turcotte2022].
+In 2002, the stock was determined to be below its limit reference point (the average biomass during 1978-1981). 
+Catch reductions were made in starting in 2003.
+
+While $F/F_\textrm{MSY}$ was estimated > 1 in 2002, the corresponding static and dynamic SPR remained above their limit thresholds.
+The $SB_\textrm{MSY}$ reference point was also not breached (Figure \@ref(fig:gsl-herring)).
+$SB_\textrm{MSY}$ is relatively low because fishery catches fish older than age of maturity-at-age as indicated by selectivity.
+Therefore, a large proportion of the spawning biomass is not vulnerable to fishing.
+
+The stock generally did not trigger most biomass LRPs (Table \@ref(tab:lrp)). 
+The LRP threshold based on $SB_\textrm{MSY}$, equilibrium $SB_0$, and dynamic $SB_0$ decreased with increasing natural mortality and decreased weight at age (Figure \@ref(fig:gsl-herring)).
+There has been a notable decline in 2002 from high biomass around 1985 and 1995.
+Despite this trend, most of the candidate LRPs did not trigger their thresholds to serious harm.
+The stock in 2002 was near but still slightly above $SB_\textrm{recover}$, the biomass in 1981.
+A threshold to low surplus production was identified and put the stock below $SB_\textrm{lowSP}$ in 2002, although the phase plot does not have as clear a delineation to a low productivity state compared to other case studies, e.g., yellowtail flounder (Figure \@ref(fig:gsl-herring)).
+
+# Discussion
+
+This review provides insight into various LRPs as indicators for serious harm in 16 fish stocks, acknowledged through either scientific analysis or intervention by management action.
+The meta-analysis evaluated the frequency that each LRP would have been triggered in the year of ESH. 
+Most F-based reference points were triggered, supporting the general presumption that fishing pressure had been too high. 
+Similarly, biomass reference points were frequently triggered, although to a lesser extent, to illustrate that large declines occurred to less productive states.
+
+Despite this finding, no individual LRP was triggered for all case studies, and the set of LRPs all triggered serious harm in just one case study.
+This behaviour indicates that the utility of candidate LRPs varies by on a case-by-case basis, frequently due to individual stock history and biological dynamics. 
+For example, low biommas, low surplus production states of nature may not always exist or be detected.
+Such definitions of serious harm, along with other historical-based LRPs, are more difficult to operationalize across all species.
+
+How serious harm is operationalized affects status determination. 
+We found that some definitions of serious harm, i.e., reduced surplus production with $SB_\textrm{MSY}$, were less likely to be triggered than other definitions, e.g., $SB_\textrm{0.9R/S}$.
+While many management systems operationalize the definition of limit reference points in the science advice process, our results highlight the necessity to retain some flexibility in defining limits to accommodate edge cases or exceptions where stock productivity is compromised, but may not be triggered by LRPs used by policy default.
+
+For the most part, serious harm is an accumulative process where indicators are trending down over time. 
+A visual inspection of Figure \@ref(fig:ts) indicates biomass declines occurred over one to two decades prior to the year of ESH. 
+A lower dynamic SPR relative to static SPR for most case studies supports the finding that continuous fishing pressure over time led to serious harm. 
+Logically, exceptions to this rule of thumb include “black-swan” events or other significant mortality events that are not caused by fishing exploitation [@anderson2017; @sagarese2022]. 
+Here, we saw that WCVI Pacific herring biomass quickly dropped in the 4 years prior to the year of ESH with the combination of increased natural mortality and reduced recruitment, in which case, the various LRPs were less likely to be triggered.
+
+A smaller subset of four individual case studies explored here spanned a variety of dynamics causing serious harm, i.e., some combination of high fishing mortality, low recruitment, and high natural mortality. 
+Accordingly, status relative to candidate LRPs differed.
+Two archetypes of serious harm seem to occur, with disparate effects on the behavior of reference points. 
+First, stocks may be depleted due to high exploitation to the extent that most, if not all metrics, will cross threshold to identify serious harm. This was the case for SNE yellowtail flounder and red snapper. While it has been postulated that there has been a regime shift towards low recruitment in yellowtail flounder [@klaer2015], fishing mortality still appeared to be too high.
+
+Second, reductions in stock size may occur due to non-fishing factors, such as increased natural mortality or lower recruitment strength.
+LRPs designed with the assumption that F is the causal factor, i.e., $F_\textrm{MSY}$ and SPR, may not indicate that serious harm has occurred. 
+Also, biomass equilibrium LRPs, i.e., $SB_\textrm{MSY}$ and $SB_0$ may not be adequate indicators of serious harm if there have been substantial changes in environmental conditions or biological conditions of the stock.
+Alternatively, historical reference points can reflect changes in stock abundance across different productivity regimes. 
+Even so, historical reference points are not fool-proof, as seen with sGSL Atlantic herring. 
+One measure of reduced productivity for this case study was reduced recruitment, and can be modeled with a change in the stock-recruit parameters [@turcotte2022]. 
+However, reduced recruitment could not be explicitly incorporated in the reference points explored here. 
+
+As with any retrospective analysis, the status determination of a previous period of time does not reflect the information available at the time, e.g., new data points after the year of established serious harm may change the estimate of the LRP. 
+However, use of recent assessments was necessitated by the difficult in obtaining prior assessments, if any, and the corresponding parameters needed to calculate the various LRPs.
+In most cases, the new assessments did not have significant changes in the perception of the stock.
+
+Identifying LRPs and status is one but not the only step in sustainable fisheries management [@hilborn2002].
+LRPs are typically defined on biological considerations, but may also reflect management objectives, e.g., ensuring a sustainable fishery in the long-term. 
+LRPs are useful when they are embedded in harvest strategies that are designed to manage a fishery to avoid the limit with high probability.
+
+There is no single unifying definition of serious harm in the various LRPs explored here. 
+While the LRPs explored in this paper were defined on units of either spawning biomass or exploitation rate, other dimensions for identifying serious harm are possible, including spatial range contraction [@maccall2019; @okamoto2020; @stier2020] or loss of age structure, although there is little guidance on how to operationalize these concepts in the provision of management advice [@barrett2024].
+
+Ultimately, the LRP definition seems to be a pragmatic choice that should be dictated by policy to ensure consistency in management, and
+ease of communication can be an additional consideration to choose one indicator to summarize the condition of the stock arising from complex dynamics. 
+This analysis supports the value of exploring a variety of indicators to determine which is most appropriate as a reference point. 
+Visualization tools such as the Reference Point Calculator App provide a readily available user interface with diagnostics, figures, and exploration tools to support such analyses [@huynh2023].
+
+# Acknowledgements
+
+QH, TR, and AR acknowledge funding from the Sustainable Fisheries Science Fund from the Government of Canada. 
+We also thank Jenni McDermid and François Turcotte (DFO) for discussions about sGSL Atlantic herring.
+
+\newpage
+
+# Tables
+
+```{r ref-pt, results = "asis", echo = FALSE}
+#ref_pt <- readxl::read_excel(here::here("Tables/ref_pt.xlsx"))
+ref_pt <- readr::read_csv(here::here("Tables/ref_pt.csv"), show_col_types = FALSE)
+
+flextable(ref_pt) %>%
+  ftExtra::colformat_md() %>%
+  width(c(1, 3), 2) %>% # Columns 1 and 3 are 2 inches wide
+  width(c(2, 4, 5), 1) %>%
+  fontsize(size = 8, part = "all") %>%
+  set_caption(
+    caption = "Summary of limit reference points, with description, required parameters for calculation, and proposed threshold for identifying serious harm."
+  )
+```
+
+\newpage
+
+```{r case-study, results = "asis"}
+stock <- readr::read_csv(here::here("Tables/stock_summary_update.csv"), show_col_types = FALSE) %>%
+  mutate(`Year ESH` = as.character(`Year ESH`))
+
+stock_out <- select(stock, !`Time-varying productivity`)
+
+ft <- flextable(stock_out) %>%
+  fontsize(size = 8, part = "all") %>%
+  colformat_md(j = c(4, 7)) %>%
+  set_table_properties(width = 1, layout = "autofit") %>%
+  set_caption(
+    caption = "Summary of case studies. Stocks are ordered by increasing ΔSB, the spawning biomass in the year of established serious harm (ESH) relative to the first year of the assessment model (Table 3). Superscripts for stocks denote time-varying productivity: (A) indicates that growth and fecundity were time-varying in the assessment model, while (B) indicates natural mortality was time-varying."
+  )
+
+for (i in 1:nrow(stock)) {
+  if (stock$`Time-varying productivity`[i] != "-") {
+    ft <- flextable::compose(
+      ft, i = i, j = 1,
+      value = as_paragraph(stock$Stock[i], as_sup(stock$`Time-varying productivity`[i]))
+    )
+  }
+}
+ft
+```
+
+\newpage
+
+```{r lrp}
+LRP_F <- readr::read_csv(here::here("Tables/LRP_F.csv"), show_col_types = FALSE)
+LRP_B <- readr::read_csv(here::here("Tables/LRP_B.csv"), show_col_types = FALSE)
+
+left_join(
+  LRP_F,
+  LRP_B,
+  by = c("Stock", "Year ESH", "dep", "n")
+) %>%
+  select(!n) %>%
+  mutate(`Year ESH` = as.character(`Year ESH`)) %>%
+  flextable() %>%
+  set_caption(caption = "Status relative to F and biomass reference points at the year of established serious harm. For SB_recover and SB_low SP, parentheses indicate the biomass of the corresponding year. Dashes indicate that the reference point biomass could not be identified based on the historical trajectory of the population. Red shading indicates values where the indicator (biomass or fishing mortality) crossed the limit threshold in Table 1. Superscripts for stocks denote time-varying productivity: (A) indicates that growth and fecundity were time-varying in the assessment model, while (B) indicates natural mortality was time-varying.")
+```
+
+\newpage
+
+# Figures
+
+(ref:fig-ts) Time series of spawning biomass (lines) and catch (bars) of the case studies from their assessments in Table \@ref(tab:case-study). The points indicate the value at the year of established serious harm (ESH) when the status relative to candidate limit reference points (LRPs) were calculated. Solid and dotted lines delineate years before and after, respectively, the year of ESH. Black and white bars delineate catches before and after, respectively, the year of ESH.
+
+```{r ts, fig.cap="(ref:fig-ts)"}
+knitr::include_graphics(here::here("Figures/meta/SB_with_catch_all.png"))
+```
+
+(ref:fig-among) Among-stock comparison of status from the candidate limit reference points relative to the change in stock biomass ($\Delta$ SB, x-axis) across 17 case studies. Labels in upper right hand corner report the correlation coefficient. Regions in red indicate values where the status indicator identifies serious harm, following Table \@ref(tab:ref-pt). Numbers identify the case studies, with bold indicating those with time-varying productivity, as reported in Table \@ref(tab:case-study). Asterisks indicate stocks for which the status indicator (y-axis) exceeds 3.
+
+```{r among, fig.cap="(ref:fig-among)"}
+knitr::include_graphics(here::here("Figures/meta/Binit_tv.png"))
+```
+
+(ref:fig-corr-F) Correlation (lower diagonal) of status with three F reference points among the case studies (upper diagonal). Dotted one-to-one lines are presented for pairs with a positive correlation. The red region indicates status values that identify serious harm for both reference point pairs, while yellow indicates that one of two reference points was triggered. Numbers identify the case studies, with bold indicating those with time-varying productivity, as reported in Table \@ref(tab:case-study).
+
+```{r corr-F, fig.cap="(ref:fig-corr-F)"}
+knitr::include_graphics(here::here("Figures/meta/Fpairs_tv.png"))
+```
+
+(ref:fig-corr-B) Correlation (lower diagonal) of status with biomass-based reference points among the case studies (upper diagonal). See caption of Figure \@ref(fig:corr-F) for further details.
+
+```{r corr-B, fig.cap="(ref:fig-corr-B)"}
+knitr::include_graphics(here::here("Figures/meta/Bpairs_tv.png"))
+```
+
+(ref:fig-yt) Historical dynamics for SNE yellowtail flounder. Time series up to the year of established serious harm (ESH) of (a) spawning biomass (bold line), (b) fishing and natural mortality rate, and (c) recruitment, alongside various LRPs (legend). In stock-recruit panels (d-e), points plot the historical recruitment with the corresponding spawning biomass. Black circles indicate the value for the year of ESH, grey points denote values for antecedent years, and white points for values in subsequent years. The curved line in (d) shows the fitted stock-recruit relationship, with the dotted horizontal corresponding to the recruitment at half of the maximum level, with the corresponding biomass, $SB_{0.5\textrm{Rmax}}$, at the vertical dashed line. Dotted lines in panel (e) indicate the 90th percentile of recruitment (horizontal line) and the 90th percentile replacement line (diagonal line). The intersection is the $SB_{0.9R/S}$ reference point (dashed vertical line). Panel (f) is a phase plot of surplus production over time, with the vertical, dashed line indicating a biomass threshold for serious harm below which there is very low to no surplus production.
+
+```{r yt, fig.cap="(ref:fig-yt)"}
+knitr::include_graphics(here::here("Figures/case_studies/1_sne_yt.png"))
+```
+
+\newpage
+
+
+(ref:fig-rs) Historical dynamics for GoM red snapper. See Figure \@ref(fig:yt) caption for further description. 
+
+```{r rs, fig.cap="(ref:fig-rs)"}
+knitr::include_graphics(here::here("Figures/case_studies/2_GoM_RS.png"))
+```
+
+
+\newpage
+
+
+
+(ref:fig-wcvi) Historical dynamics for WCVI Pacific herring. See Figure \@ref(fig:yt) caption for further description. 
+
+```{r wcvi, fig.cap="(ref:fig-wcvi)"}
+knitr::include_graphics(here::here("Figures/case_studies/6_WCVI_herring.png"))
+```
+
+\newpage
+
+
+
+(ref:fig-gsl-herring) Historical dynamics for sGSL Atlantic herring. See Figure \@ref(fig:yt) caption for further description.
+
+```{r gsl-herring, fig.cap="(ref:fig-gsl-herring)"}
+knitr::include_graphics(here::here("Figures/case_studies/14_sGSL_herring.png"))
+```
+
+\newpage
+
+# References
+
+
+
+
