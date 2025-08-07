@@ -17,7 +17,9 @@ get_ref_pt <- function(Hist, OM, Year_assess,
     calc_phi0(M = Hist@SampPars$Stock$M_ageArray[1, , y], 
               Wt = Hist@SampPars$Stock$Wt_age[1, , y], 
               Mat = Hist@SampPars$Stock$Mat_age[1, , y], 
-              Fec = Hist@SampPars$Stock$Fec_Age[1, , y])
+              Fec = Hist@SampPars$Stock$Fec_Age[1, , y],
+              Wt_C = Hist@SampPars$Fleet$Wt_age_C[1, , y],
+              spawn_time_frac =  Hist@SampPars$Stock$spawn_time_frac[1])
   })
   
   do_SP <- RPC::LRP_SP(Hist, "none")
@@ -49,10 +51,12 @@ get_ref_pt <- function(Hist, OM, Year_assess,
                                 Mat_at_Age = Hist@SampPars$Stock$Mat_age[1, , y],
                                 Fec_at_Age = Hist@SampPars$Stock$Fec_Age[1, , y],
                                 V_at_Age = Hist@SampPars$Fleet$V_real[1, , y],
+                                Wt_at_Age_C = Hist@SampPars$Fleet$Wt_age_C[1, , y],
                                 relRfun = function(...) NULL,
                                 SRRpars = list(),
                                 maxage = OM@maxage,
-                                plusgroup = 1)
+                                plusgroup = 1,
+                                spawn_time_frac = Hist@SampPars$Stock$spawn_time_frac[1])
       
       RPS <- Ref_search[3,]
       MSEtool:::LinInterp_cpp(RPS, F_search, xlev = median(RpS[Year >= Yr_Fmed]))
@@ -285,7 +289,7 @@ gghist <- function(x, title = TRUE, letter.legend, retro_only = TRUE, SBref = TR
 
 plot_Hist <- function(...) {
   dots <- list(...)
-  out <- lapply(dots, gghist)
+  out <- lapply(dots, gghist, retro_only = FALSE)
   cowplot::plot_grid(plotlist = out)
 }
 
@@ -555,11 +559,16 @@ SRR <- function(x, R, S, rel = c("hockey_stick", "Ricker", "BH", "sBH"),
   }
 }
 
-calc_phi0 <- function(M, Wt, Mat, Fec) {
-  1/MSEtool:::Ref_int_cpp(1e-8, M, Wt, Mat, Fec, rep(0, length(M)),
-                          relRfun = function(...) NULL, 
-                          SRRpars = list(),
-                          length(M) - 1)[3, 1]
+calc_phi0 <- function(M, Wt, Mat, Fec, Wt_C, spawn_time_frac) {
+  ref <- MSEtool:::Ref_int_cpp(
+    1e-8, M, Wt, Mat, Fec, rep(0, length(M)), Wt_C,
+    relRfun = function(...) NULL, 
+    SRRpars = list(),
+    maxage = length(M) - 1,
+    spawn_time_frac = spawn_time_frac
+  )
+  RS <- ref[3, 1] # Unfished recruits per spawner
+  return(1/RS)
 }
 
 plot_ts <- function(LRP) {

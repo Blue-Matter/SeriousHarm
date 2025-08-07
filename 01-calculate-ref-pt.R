@@ -1,7 +1,7 @@
 
 
 library(MSEtool)
-source("analysis_fn.R")
+source("99-analysis_fn.R")
 
 
 # SWO 
@@ -37,7 +37,7 @@ RS <- readRDS(file = "LRP/LRP_GoM_RS.rds")
 
 # NE Acadian redfish
 OM <- readRDS(file = "OM/OM_NE_redfish.rds")
-OM@cpars$Wt_age_C <- NULL
+#OM@cpars$Wt_age_C <- NULL
 Hist <- SubCpars(OM, 1:2) %>% runMSE(Hist = TRUE, silent = TRUE)
 
 AR <- get_ref_pt(Hist, OM, 
@@ -57,7 +57,7 @@ AR <- readRDS(file = "LRP/LRP_NE_redfish.rds")
 # GoM Haddock
 #OM <- readRDS("OM/OM_GoM_haddock.rds")
 #Hist <- SubCpars(OM, 1:2) %>% runMSE(Hist = TRUE, silent = TRUE)
-#
+
 ## No formal assessment between 1986-2001 overfished statement 
 ## See Amendment 9 (1999)
 #HD <- get_ref_pt(Hist, OM, 
@@ -184,14 +184,14 @@ DB <- readRDS(file = "LRP/LRP_WC_darkblotched.rds")
 # US POP
 #OM <- readRDS(file = "OM/OM_WC_pop.rds")
 #Hist <- SubCpars(OM, 1:2) %>% runMSE(Hist = TRUE, silent = TRUE)
-#
+
 #POP <- get_ref_pt(Hist, OM, 
 #                  Year_assess = 2001, # Declared overfished
 #                  Name = "U.S.~Pacific~ocean~perch",
 #                  Yr_SRP = 1987,  # Year corresponding to ICES Blim
 #                  Yr_Fmed = 1965 # First year for calculating median R/S
 #)
-#
+
 #saveRDS(POP, file = "LRP/LRP_WC_pop.rds")
 #POP <- readRDS(file = "LRP/LRP_WC_pop.rds")
 #
@@ -463,16 +463,16 @@ saveRDS(WCVI, file = "LRP/LRP_WCVI_herring.rds")
 
 
 # EBS cod
-OM <- readRDS(file = "OM/OM_EBS_cod.rds")
-Hist <- SubCpars(OM, 1:2) %>% runMSE(Hist = TRUE, silent = TRUE)
-
-EBScod <- get_ref_pt(Hist, OM, 
-                     Year_assess = 2019, # zero catch advised https://doi.org/10.17895/ices.advice.4747
-                     Name = "EBS~cod",
-                     Yr_SRP = 2012,  # Year corresponding to ICES Blim
-                     Yr_Fmed = 1946, # First year for calculating median R/S
-                     Yr_SP = 2012,
-                     Yr_Brecover = 1960
-)
-saveRDS(EBScod, file = "LRP/LRP_EBS_cod.rds")
+#OM <- readRDS(file = "OM/OM_EBS_cod.rds")
+#Hist <- SubCpars(OM, 1:2) %>% runMSE(Hist = TRUE, silent = TRUE)
+#
+#EBScod <- get_ref_pt(Hist, OM, 
+#                     Year_assess = 2019, # zero catch advised https://doi.org/10.17895/ices.advice.4747
+#                     Name = "EBS~cod",
+#                     Yr_SRP = 2012,  # Year corresponding to ICES Blim
+#                     Yr_Fmed = 1946, # First year for calculating median R/S
+#                     Yr_SP = 2012,
+#                     Yr_Brecover = 1960
+#)
+#saveRDS(EBScod, file = "LRP/LRP_EBS_cod.rds")
 
