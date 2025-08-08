@@ -1,0 +1,11 @@
+﻿Reference point,Serious harm threshold,Parameters,Type,References
+Fishing mortality at MSY ($F_\textrm{MSY}$),$F/F_\textrm{MSY}$ > 1,"Stock recruit parameters, growth, maturity, natural mortality, fishery selectivity",Equilibrium,
+Spawning potential ratio – equilibrium ($\textrm{SPR}_\textrm{eq}$),$\textrm{SPR}_\textrm{eq}$ < 0.40,"Growth, maturity, natural mortality, fishery selectivity",Equilibrium,@mace1993
+Spawning potential ratio – dynamic ($\textrm{SPR}_\textrm{dyn}$),"Not previously established; here, same as $\textrm{SPR}_\textrm{eq}$","Growth, maturity, natural mortality, fishery selectivity","Dynamic, threshold based on equilibrium variant",@mace1996
+Biomass at MSY ($SB_\textrm{MSY}$),$SB/SB_\textrm{MSY}$ < 0.40,Same as $F_\textrm{MSY}$,Equilibrium,
+"Equilibrium unfished biomass ($SB_{0,eq}$)","$SB/SB_{0,eq}$ < 0.2","Stock recruit parameters, growth, maturity, natural mortality",Equilibrium,@beddington1983
+"Dynamic unfished biomass ($SB_{0,dyn}$)","Not previously established; here, same as $SB_{0,eq}$","Stock recruit parameters, historical recruitment deviations, growth, maturity, natural mortality","Dynamic, threshold based on equilibrium variant",@maccall1985
+Biomass at half of maximum expected recruitment ($SB_{0.5\textrm{Rmax}}$),$SB/SB_{0.5\textrm{Rmax}}$ < 1,Stock recruit parameters,Equilibrium,@myers1994
+Lowest historical biomass with subsequent recovery ($SB_\textrm{recover}$),$SB/SB_\textrm{recover}$ < 1,Biomass time series,Historical,
+Low biomass threshold with shift to low surplus production ($SB_\textrm{lowSP}$),$SB/SB_\textrm{lowSP}$ < 1,Biomass and catch time series,Historical,@mohn2004
+Biomass from intersection of 90th percentile of replacement line and recruitment ($SB_{0.9R/S}$),$SB/SB_{0.9R/S}$ < 1,Biomass and recruitment time series,Historical,@serebryakov1991

@@ -1,0 +1,17 @@
+Stock,Region,Time-varying productivity,Assessment Time Period,Stock-recruit relationship,Year ESH,ESH criteria,References
+(1) SNE yellowtail flounder,Southern New England,A,1973-2018,Estimated (BH),2005,Rebuilding plan,@nefsc2022_yt
+(2) GoM red snapper,Gulf of Mexico,-,1872-2016,From assessment (BH),1990,Fishery sector closures with bag/size limits,@sedar2018
+(3) SA gag grouper,U.S. South Atlantic,-,1962-2019,From assessment (BH),2019,"Stock below limit, rebuilding plan",@sedar2021
+(4) NAFO plaice,NAFO 3LNO,AB,1960-2017,Estimated (Ri) [@zhang2020],1994,"Catch reductions, no directed fishery",@wheeland2018
+(5) NAFO cod,NAFO 3NO,A,1959-2017,"Estimated (Ri, 1991 – 2017) [@zhang2020]",1994,Fishery closure,@rideout2018
+(6) NE Acadian redfish,New England,-,1913-2019,From assessment (BH),1976,Low fishery CPUE and survey indices,@mayo1979; @nefsc2022_ar
+(7) WCVI Pacific herring,West Coast Vancouver Island,AB,1951-2019,From assessment (BH),2005,Fishery closure,@cleary2019; @dfo2020
+(8) NA swordfish,North Atlantic,-,1950-2017,From assessment (BH),1999,Rebuilding plan,@iccat1999; @schirripa2020
+(9) US darkblotched rockfish,U.S. West Coast,-,1915-2016,From assessment (BH),2003,Rebuilding plan,@pfmc2004; @wallace2018
+(10) NEA horse mackerel,Northeast Atlantic,-,1982-2020,"Estimated (BH, 1983 – 2020; ICES 2021a)",2020,"Stock at limit, rebuilding plan requested",@ices2021_hom; @ices2021_wgwide
+(11) Atlantic bigeye tuna,Atlantic Ocean,-,1950-2019,From assessment (BH),2018,Rebuilding plan,@iccat2019; @anonymous2021
+(12) SCB cowcod,Southern California Bight (U.S.),-,1900-2018,From assessment (BH),2000,"Catch reductions, rebuilding plan",@dick2014; @dick2019
+(13) SA red porgy,U.S. South Atlantic,-,1972-2017,From assessment (BH),1992,Rebuilding plan,@sedar2020
+(14) sGSL herring,Southern Gulf of St. Lawrence,AB,1978-2019,"Estimated (Ri, 1992 – 2017) [@turcotte2022]",2002,Stock below limit,@turcotte2021
+(15) GM cod,Gulf of Maine,AB,1982-2018,Estimated (BH),2005,Rebuilding plan,@nefsc2022_yt
+(16) sGSL cod,Southern Gulf of St. Lawrence,AB,1971-2018,"Estimated (BH, 1989 – 2018) [@swain2019]",1993,Fishery closure,@swain2019
