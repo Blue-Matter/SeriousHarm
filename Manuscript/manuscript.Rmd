@@ -7,6 +7,7 @@ output:
     reference_docx: "manuscript_template.docx"
     citation_package: biblatex
     global_numbering: true
+    toc: true
 bibliography: "refs.bib"
 link-citations: true
 ---
@@ -379,6 +380,14 @@ Visualization tools such as the Reference Point Calculator App provide a readily
 
 QH, TR, and AR acknowledge funding from the Sustainable Fisheries Science Fund from the Government of Canada. 
 We also thank Jenni McDermid and François Turcotte (DFO) for discussions about sGSL Atlantic herring.
+
+# Conflicts of interest
+
+The authors declare no conflict of interest in this manuscript.
+
+# Data availability statement
+
+The R code that supports this study is available at: https://github.com/Blue-Matter/SeriousHarm
 
 \newpage
 
